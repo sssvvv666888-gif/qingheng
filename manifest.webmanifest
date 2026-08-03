@@ -1,0 +1,17 @@
+{
+  "name": "轻衡 · 减脂生活管理",
+  "short_name": "轻衡",
+  "description": "温和记录饮食、运动、步数和日常节奏。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fff7f1",
+  "theme_color": "#f8c4cb",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

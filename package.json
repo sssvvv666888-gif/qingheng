@@ -1,0 +1,13 @@
+{
+  "name": "qingheng-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node scripts/prepare-static.mjs && next build"
+  },
+  "dependencies": {
+    "next": "15.5.7",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  }
+}

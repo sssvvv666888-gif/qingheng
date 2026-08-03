@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#153f35">
+  <meta name="description" content="轻衡——温和、可持续的减脂生活记录工具。">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="轻衡">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <title>轻衡 · 减脂生活管理</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="主导航">
+      <a class="brand" href="#today" aria-label="轻衡首页">
+        <span class="brand-mark" aria-hidden="true">莓</span>
+        <span><strong>轻衡</strong><small>莓一天，都算数</small></span>
+      </a>
+
+      <nav class="nav-list">
+        <button class="nav-item is-active" data-view="today"><span>◉</span>今日</button>
+        <button class="nav-item" data-view="records"><span>≋</span>记录</button>
+        <button class="nav-item" data-view="insights"><span>⌁</span>趋势</button>
+        <button class="nav-item" data-view="profile"><span>◎</span>我的</button>
+      </nav>
+
+      <div class="privacy-note">
+        <span class="status-dot"></span>
+        <div><strong>数据留在本机</strong><small>无需注册，不上传个人记录</small></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="today-date"></p>
+          <h1 id="view-title">早上好，慢慢来</h1>
+        </div>
+        <button class="avatar" data-open-profile aria-label="打开个人设置">林</button>
+      </header>
+
+      <section class="view is-active" id="view-today" data-title="早上好，慢慢来">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <span class="soft-label">本周节奏</span>
+            <h2>今天也慢悠悠地<br>照顾自己呀。</h2>
+            <p>好好吃一顿饭，轻松动一动，再给自己一个香香的好觉。</p>
+            <div class="hero-actions">
+              <button class="primary-button" data-log="meal">记录一餐</button>
+              <button class="text-button" data-view-link="records">查看全部记录 <span>→</span></button>
+            </div>
+          </div>
+          <div class="hero-side" aria-hidden="true">
+            <div class="setting-bears">
+              <img class="setting-bear setting-bear-brown" src="assets/rilakkuma-from-setting.png" alt="">
+              <img class="setting-bear setting-bear-cream" src="assets/korilakkuma-from-setting.png" alt="">
+            </div>
+            <span class="mascot-note">懒懒动一动，也很棒 🍓</span>
+          </div>
+          <div class="progress-orbit" aria-label="本周完成率">
+            <svg viewBox="0 0 140 140" role="img">
+              <circle class="orbit-track" cx="70" cy="70" r="55"></circle>
+              <circle class="orbit-value" id="weekly-ring" cx="70" cy="70" r="55"></circle>
+            </svg>
+            <div><strong id="weekly-percent">0%</strong><span>本周完成</span></div>
+          </div>
+        </div>
+
+        <div class="section-heading">
+          <div><p class="eyebrow">今日概览</p><h2>收集今天的小小进步</h2></div>
+          <span class="muted" id="last-saved">已自动保存</span>
+        </div>
+
+        <article class="panel calorie-compare" aria-labelledby="calorie-title">
+          <div class="panel-heading">
+            <div><p class="eyebrow">今日热量</p><h3 id="calorie-title">摄入 vs 运动支出</h3></div>
+            <span id="calorie-gap">相差 0 kcal</span>
+          </div>
+          <div class="calorie-bars">
+            <div class="calorie-row"><div><span>饮食摄入</span><strong><b id="intake-calories">0</b> kcal</strong></div><div class="calorie-track"><i id="intake-calorie-bar"></i></div></div>
+            <div class="calorie-row burn-row"><div><span>运动支出</span><strong><b id="burn-calories">0</b> kcal</strong></div><div class="calorie-track"><i id="burn-calorie-bar"></i></div></div>
+          </div>
+          <p class="estimate-note">仅比较已记录的饮食摄入与运动支出，不含基础代谢。</p>
+        </article>
+
+        <div class="metric-grid">
+          <article class="metric-card energy">
+            <div class="metric-icon">火</div>
+            <div><span>饮食能量</span><strong><b id="energy-value">0</b> <small>kcal</small></strong></div>
+            <div class="mini-progress"><i id="energy-bar"></i></div>
+            <p>建议预算 <span id="energy-target">1850</span> kcal</p>
+          </article>
+          <article class="metric-card activity">
+            <div class="metric-icon">动</div>
+            <div><span>活动时间</span><strong><b id="activity-value">0</b> <small>分钟</small></strong></div>
+            <div class="mini-progress"><i id="activity-bar"></i></div>
+            <p>今天目标 <span id="activity-target">30</span> 分钟</p>
+          </article>
+          <article class="metric-card water">
+            <div class="metric-icon">水</div>
+            <div><span>饮水</span><strong><b id="water-value">0</b> <small>ml</small></strong></div>
+            <div class="mini-progress"><i id="water-bar"></i></div>
+            <p>今天目标 <span id="water-target">1800</span> ml</p>
+          </article>
+        </div>
+
+        <article class="panel today-meals-panel">
+          <div class="panel-heading"><div><p class="eyebrow">今日饮食</p><h3>今天吃了什么</h3></div><button class="meal-add-button" type="button" data-log="meal">＋ 记录一餐</button></div>
+          <div class="meal-card-grid" id="today-meals"></div>
+        </article>
+
+        <div class="activity-tools-grid">
+          <article class="panel steps-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">今日步数</p><h3>每一步都算数</h3></div>
+              <span class="cute-chip">散步也很棒</span>
+            </div>
+            <div class="steps-total"><strong id="steps-value">0</strong><span>步</span></div>
+            <div class="steps-progress"><i id="steps-bar"></i><span id="steps-goal-copy">目标 8000 步</span></div>
+            <div class="steps-editor">
+              <label>输入今天的总步数<input id="steps-input" type="number" min="0" max="100000" step="100" inputmode="numeric" placeholder="例如 6500"></label>
+              <div class="step-buttons">
+                <button type="button" data-steps-add="1000">＋1000</button>
+                <button type="button" data-steps-add="3000">＋3000</button>
+                <button class="primary-button" type="button" data-save-steps>保存步数</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel video-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">运动视频</p><h3>粘贴链接，计时跟练</h3></div>
+              <span class="local-video-badge" id="video-platform-badge">支持三平台</span>
+            </div>
+            <div class="video-link-box">
+              <label>抖音 / 小红书 / 哔哩哔哩链接
+                <input id="video-url" type="url" inputmode="url" placeholder="粘贴运动视频链接">
+              </label>
+              <button class="secondary-button" id="open-video-link" type="button" disabled>打开视频 ↗</button>
+            </div>
+            <div class="video-stats">
+              <div><span>有效跟练时间</span><strong id="video-time">00:00</strong></div>
+              <div><span>本次估算</span><strong><b id="video-burn">0</b> kcal</strong></div>
+              <div><span>今日累计</span><strong><b id="today-burn">0</b> kcal</strong></div>
+            </div>
+            <div class="timer-actions">
+              <button class="primary-button" id="start-video-timer" type="button" disabled>开始计时</button>
+              <button class="secondary-button" id="pause-video-timer" type="button" disabled>暂停</button>
+              <button class="secondary-button" id="reset-video-timer" type="button" disabled>重置</button>
+            </div>
+            <div class="video-controls-grid">
+              <label>运动强度
+                <select id="video-intensity">
+                  <option value="3.3">轻松拉伸</option>
+                  <option value="4.5">轻快健身操</option>
+                  <option value="6.0" selected>中等强度跟练</option>
+                  <option value="8.0">高强度间歇</option>
+                </select>
+              </label>
+              <label>消耗热量（kcal）<input id="video-calories-input" type="number" min="0" max="5000" step="1" value="0"></label>
+            </div>
+            <div class="video-actions">
+              <button class="primary-button" id="save-video-session" type="button" disabled>保存本次跟练</button>
+            </div>
+            <p class="estimate-note">网页无法读取外部平台的播放状态，请在打开视频后手动开始/暂停。热量为粗略估算，可按设备数据修改。</p>
+          </article>
+        </div>
+
+        <div class="content-grid">
+          <article class="panel plan-panel">
+            <div class="panel-heading"><div><p class="eyebrow">轻计划</p><h3>今天做这三件事</h3></div><span id="task-count">0 / 3</span></div>
+            <div class="task-list" id="task-list"></div>
+          </article>
+
+          <article class="panel quick-panel">
+            <div class="panel-heading"><div><p class="eyebrow">快捷记录</p><h3>轻轻一点，就记好啦</h3></div></div>
+            <div class="quick-grid">
+              <button data-log="meal"><span>＋</span><strong>饮食</strong><small>能量与备注</small></button>
+              <button data-log="activity"><span>＋</span><strong>运动</strong><small>类型与时长</small></button>
+              <button data-log="water"><span>＋</span><strong>饮水</strong><small>快速加一杯</small></button>
+              <button data-log="weight"><span>＋</span><strong>体重</strong><small>关注长期趋势</small></button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-records" data-title="记录，不评判">
+        <div class="section-heading records-heading">
+          <div><p class="eyebrow">时间线</p><h2>你的每一步都被看见</h2></div>
+          <button class="primary-button" data-log="meal">新增记录</button>
+        </div>
+        <div class="filter-row" role="group" aria-label="记录筛选">
+          <button class="filter-chip is-active" data-filter="all">全部</button>
+          <button class="filter-chip" data-filter="meal">饮食</button>
+          <button class="filter-chip" data-filter="activity">运动</button>
+          <button class="filter-chip" data-filter="video">视频跟练</button>
+          <button class="filter-chip" data-filter="steps">步数</button>
+          <button class="filter-chip" data-filter="water">饮水</button>
+          <button class="filter-chip" data-filter="weight">体重</button>
+        </div>
+        <div class="timeline" id="timeline"></div>
+      </section>
+
+      <section class="view" id="view-insights" data-title="趋势，而不是波动">
+        <div class="insight-hero">
+          <div><p class="eyebrow">近 7 次记录</p><h2>体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p></div>
+          <div class="trend-stat"><span>从首次记录起</span><strong id="weight-change">—</strong></div>
+        </div>
+        <article class="panel chart-panel">
+          <div class="chart-wrap" id="weight-chart" aria-label="体重趋势图"></div>
+        </article>
+        <div class="insight-grid">
+          <article class="panel insight-card"><span>完成度</span><strong id="insight-completion">0%</strong><p>基于本周每日任务完成情况</p></article>
+          <article class="panel insight-card"><span>活动累计</span><strong id="insight-activity">0 分钟</strong><p>有记录的活动都算进来</p></article>
+          <article class="panel insight-card"><span>温和提醒</span><strong>睡眠也很重要</strong><p>精力不足时，先恢复，再加量。</p></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-profile" data-title="我的节奏，我来定义">
+        <div class="profile-layout">
+          <article class="panel profile-card">
+            <div class="profile-avatar">林</div>
+            <h2>轻衡体验者</h2>
+            <p>不追求短期极端变化，建立可以长期维持的生活方式。</p>
+            <div class="local-badge"><span class="status-dot"></span>本地模式</div>
+          </article>
+          <form class="panel settings-card" id="settings-form">
+            <div class="panel-heading"><div><p class="eyebrow">目标设置</p><h3>调整你的日常目标</h3></div></div>
+            <div class="form-grid">
+              <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" required></label>
+              <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" required></label>
+              <label>每日能量预算（kcal）<input type="number" name="energyTarget" min="1200" max="4000" step="10" required></label>
+              <label>每日活动目标（分钟）<input type="number" name="activityTarget" min="5" max="240" step="5" required></label>
+              <label>每日饮水目标（ml）<input type="number" name="waterTarget" min="500" max="5000" step="100" required></label>
+              <label>每日步数目标（步）<input type="number" name="stepsTarget" min="1000" max="50000" step="500" required></label>
+            </div>
+            <div class="safety-callout">目标仅用于自我记录，不构成医疗或营养建议。若你未满 18 岁、孕期/哺乳期、有进食障碍史或慢性疾病，请先咨询专业人士。</div>
+            <button class="primary-button" type="submit">保存目标</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" aria-label="移动端主导航">
+      <button class="is-active" data-view="today"><span>◉</span>今日</button>
+      <button data-view="records"><span>≋</span>记录</button>
+      <button data-view="insights"><span>⌁</span>趋势</button>
+      <button data-view="profile"><span>◎</span>我的</button>
+    </nav>
+  </div>
+
+  <dialog id="log-dialog">
+    <form method="dialog" id="log-form">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
+      <p class="eyebrow">快速记录</p>
+      <h2 id="dialog-title">记录一餐</h2>
+      <input type="hidden" name="type" value="meal">
+      <div id="dynamic-fields"></div>
+      <label>备注（可选）<input type="text" name="note" maxlength="60" placeholder="例如：午餐，七分饱"></label>
+      <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存记录</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
