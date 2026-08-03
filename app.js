@@ -1,9 +1,11 @@
 const STORAGE_KEY = "qingheng-mvp-v1";
 
 const defaults = {
+  profile: null,
   settings: {
-    currentWeight: 68.4,
-    goalWeight: 62,
+    currentWeight: null,
+    goalWeight: null,
+    height: null,
     energyTarget: 1850,
     activityTarget: 30,
     waterTarget: 1800,
@@ -14,17 +16,7 @@ const defaults = {
     { id: "walk", title: "活动 30 分钟", hint: "散步、骑行或你喜欢的运动", done: false },
     { id: "sleep", title: "给睡眠留够时间", hint: "睡前半小时放下屏幕", done: false }
   ],
-  logs: [
-    { id: 1, type: "weight", value: 68.4, note: "初始记录", at: daysAgo(6, 8) },
-    { id: 2, type: "weight", value: 68.1, note: "", at: daysAgo(5, 8) },
-    { id: 3, type: "weight", value: 67.9, note: "", at: daysAgo(4, 8) },
-    { id: 4, type: "weight", value: 68.0, note: "正常波动", at: daysAgo(3, 8) },
-    { id: 5, type: "weight", value: 67.6, note: "", at: daysAgo(2, 8) },
-    { id: 6, type: "weight", value: 67.4, note: "", at: daysAgo(1, 8) },
-    { id: 7, type: "meal", value: 460, mealType: "早餐", note: "鸡蛋、全麦面包和水果", at: todayAt(8, 10) },
-    { id: 8, type: "water", value: 500, note: "上午饮水", at: todayAt(10, 35) },
-    { id: 9, type: "activity", value: 22, calories: 75, note: "午间散步", at: todayAt(12, 45) }
-  ]
+  logs: []
 };
 
 let state = loadState();
@@ -67,12 +59,21 @@ function loadState() {
       ...structuredClone(defaults),
       ...saved,
       settings: { ...defaults.settings, ...saved.settings },
+      profile: saved.profile || null,
       tasks: saved.tasks,
       logs: saved.logs
     };
   } catch {
     return structuredClone(defaults);
   }
+}
+
+function hasCompletedProfile() {
+  const profile = state.profile;
+  return Boolean(
+    profile?.avatar && String(profile.name || "").trim() && String(profile.signature || "").trim()
+    && Number(profile.currentWeight) > 0 && Number(profile.goalWeight) > 0 && Number(profile.height) > 0
+  );
 }
 
 function saveState(message = "已自动保存") {
@@ -109,11 +110,45 @@ function setView(name) {
   document.querySelectorAll(".view").forEach(view => view.classList.toggle("is-active", view.id === `view-${name}`));
   document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("is-active", button.dataset.view === name));
   const view = document.querySelector(`#view-${name}`);
-  document.querySelector("#view-title").textContent = view?.dataset.title || "轻衡";
+  document.querySelector("#view-title").textContent = name === "today" && hasCompletedProfile() ? greetingTitle() : (view?.dataset.title || "轻衡");
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (name === "records") renderTimeline();
   if (name === "insights") renderInsights();
   if (name === "profile") fillSettings();
+}
+
+function greetingTitle() {
+  const hour = new Date().getHours();
+  const greeting = hour < 11 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
+  return `${greeting}，${state.profile?.name || ""}`;
+}
+
+function renderProfileSummary() {
+  if (!hasCompletedProfile()) return;
+  const profile = state.profile;
+  setText("hero-user-name", profile.name);
+  setText("hero-signature", profile.signature);
+  setText("home-profile-name", profile.name);
+  setText("home-profile-signature", profile.signature);
+  setText("home-current-weight", formatValue(profile.currentWeight));
+  setText("home-goal-weight", formatValue(profile.goalWeight));
+  setText("profile-display-name", profile.name);
+  setText("profile-display-signature", profile.signature);
+  setText("profile-current-weight", formatValue(profile.currentWeight));
+  setText("profile-goal-weight", formatValue(profile.goalWeight));
+  setText("profile-height", formatValue(profile.height));
+  document.querySelector("#view-today").dataset.title = greetingTitle();
+  if (document.querySelector("#view-today").classList.contains("is-active")) setText("view-title", greetingTitle());
+
+  for (const id of ["topbar-avatar", "home-profile-avatar", "profile-avatar-image"]) {
+    const image = document.getElementById(id);
+    if (image) {
+      image.src = profile.avatar;
+      image.hidden = false;
+    }
+  }
+  const fallback = document.querySelector("#topbar-avatar-fallback");
+  if (fallback) fallback.hidden = true;
 }
 
 function renderDashboard() {
@@ -154,6 +189,7 @@ function renderDashboard() {
   document.querySelector("#weekly-ring").style.strokeDashoffset = String(345.6 * (1 - completion / 100));
   renderTasks();
   renderTodayMeals();
+  renderProfileSummary();
 }
 
 function renderTodayMeals() {
@@ -167,8 +203,19 @@ function renderTodayMeals() {
   container.innerHTML = meals.map(log => `
     <article class="meal-card">
       <div class="meal-photo">${log.image ? `<img src="${log.image}" alt="${escapeHtml(log.mealType || "饮食")}图片">` : '<span aria-hidden="true">🍓</span>'}</div>
-      <div class="meal-card-copy"><span>${escapeHtml(log.mealType || "饮食")}</span><strong>${escapeHtml(log.note || "已记录一餐")}</strong><small>${Math.round(Number(log.value) || 0)} kcal</small></div>
+      <div class="meal-card-copy">
+        <span>${escapeHtml(log.mealType || "饮食")}</span>
+        <strong>${escapeHtml(log.foodName || log.note || "已记录一餐")}</strong>
+        <small>${Math.round(Number(log.value) || 0)} kcal · ${formatMealDate(log)}</small>
+        ${log.note && log.foodName ? `<p>${escapeHtml(log.note)}</p>` : ""}
+        <div class="meal-card-actions"><button type="button" data-edit-meal="${log.id}">编辑</button><button type="button" data-delete-meal="${log.id}">删除</button></div>
+      </div>
     </article>`).join("");
+}
+
+function formatMealDate(log) {
+  const date = new Date(log.at);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function renderTasks() {
@@ -201,11 +248,12 @@ function renderTimeline() {
       : log.type === "activity" && Number(log.calories) > 0
         ? `${formatValue(log.value)} 分钟 · ${Math.round(Number(log.calories))} kcal`
       : `${formatValue(log.value)} ${config.unit}`;
-    return `<article class="timeline-item">
+    return `<article class="timeline-item ${log.type === "meal" ? "meal-timeline-item" : ""}">
       <time class="timeline-time">${dateText}</time>
       <span class="timeline-symbol">${config.symbol}</span>
-      <div class="timeline-copy"><strong>${log.type === "meal" ? escapeHtml(log.mealType || config.name) : config.name}</strong><small>${escapeHtml(log.note || "已记录")}</small></div>
+      <div class="timeline-copy"><strong>${log.type === "meal" ? `${escapeHtml(log.mealType || config.name)} · ${escapeHtml(log.foodName || "饮食记录")}` : config.name}</strong><small>${escapeHtml(log.note || "已记录")}</small></div>
       <span class="timeline-value">${valueText}</span>
+      ${log.type === "meal" ? `<div class="timeline-actions"><button type="button" data-edit-meal="${log.id}">编辑</button><button type="button" data-delete-meal="${log.id}">删除</button></div>` : ""}
     </article>`;
   }).join("");
 }
@@ -323,7 +371,7 @@ function activeWatchedSeconds() {
 
 function estimatedCalories(seconds = activeWatchedSeconds()) {
   const met = Number(document.querySelector("#video-intensity")?.value || 6);
-  const weight = Number(state.settings.currentWeight || 60);
+  const weight = Number(state.settings.currentWeight || 0);
   return Math.max(0, met * 3.5 * weight / 200 * (seconds / 60));
 }
 
@@ -409,20 +457,35 @@ function saveVideoSession() {
   resetVideoSession();
 }
 
-function openLogDialog(type) {
+function openLogDialog(type, editId = "") {
   const config = logConfig[type];
   const form = document.querySelector("#log-form");
   form.reset();
   form.elements.type.value = type;
-  document.querySelector("#dialog-title").textContent = config.title;
-  let fields = `<label>${config.label}<input type="number" name="value" min="${config.min}" max="${config.max}" step="${config.step}" placeholder="${config.placeholder}" required></label>`;
-  if (type === "meal") fields = `
-    <label>餐别<select name="mealType" required><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></label>
-    ${fields}
-    <label>餐食图片（可选）<input type="file" name="image" accept="image/*"><small class="field-hint">图片会压缩后保存在当前浏览器，不会上传。</small></label>`;
+  form.elements.editId.value = editId;
+  const editingLog = editId ? state.logs.find(log => String(log.id) === String(editId) && log.type === type) : null;
+  document.querySelector("#dialog-title").textContent = editingLog ? "修改饮食记录" : config.title;
+  let fields = `<label>${config.label}<input type="number" name="value" min="${config.min}" max="${config.max}" step="${config.step}" placeholder="${config.placeholder}" ${editingLog ? `value="${escapeHtml(editingLog.value)}"` : ""} required></label>`;
+  if (type === "meal") {
+    const mealDate = editingLog?.date || dateInputValue(editingLog?.at || new Date().toISOString());
+    const mealType = editingLog?.mealType === "加餐" ? "零食" : (editingLog?.mealType || "早餐");
+    fields = `
+      <label>日期<input type="date" name="date" value="${mealDate}" required></label>
+      <label>类型<select name="mealType" required>${["早餐", "午餐", "晚餐", "零食"].map(option => `<option ${option === mealType ? "selected" : ""}>${option}</option>`).join("")}</select></label>
+      <label class="food-name-field">食物名称<input type="text" name="foodName" maxlength="40" value="${escapeHtml(editingLog?.foodName || "")}" placeholder="例如：草莓酸奶碗" required></label>
+      ${fields}
+      <label>餐食图片（可选）<input type="file" name="image" accept="image/*"><small class="field-hint">${editingLog?.image ? "已保留原图片；选择新图后会覆盖。" : "图片会压缩后保存在当前浏览器，不会上传。"}</small></label>`;
+  }
   if (type === "activity") fields += '<label>消耗热量（kcal，可选）<input type="number" name="calories" min="0" max="5000" step="1" placeholder="例如 120"></label>';
   document.querySelector("#dynamic-fields").innerHTML = fields;
+  form.elements.note.value = editingLog?.note || "";
   document.querySelector("#log-dialog").showModal();
+}
+
+function dateInputValue(iso) {
+  const date = new Date(iso);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 function resizeMealImage(file) {
@@ -451,6 +514,8 @@ async function submitLog(event) {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
   const type = form.get("type");
+  const editId = String(form.get("editId") || "");
+  const existing = editId ? state.logs.find(log => String(log.id) === editId && log.type === type) : null;
   const value = Number(form.get("value"));
   if (!Number.isFinite(value)) return;
   let image = "";
@@ -465,38 +530,153 @@ async function submitLog(event) {
   const log = { id: Date.now(), type, value, note: String(form.get("note") || "").trim(), at: new Date().toISOString() };
   if (type === "meal") {
     log.mealType = String(form.get("mealType") || "饮食");
-    log.image = image;
+    log.foodName = String(form.get("foodName") || "").trim();
+    log.date = String(form.get("date") || dateInputValue(log.at));
+    log.at = new Date(`${log.date}T12:00:00`).toISOString();
+    log.image = image || existing?.image || "";
   }
   if (type === "activity") log.calories = Math.max(0, Number(form.get("calories")) || 0);
-  state.logs.push(log);
-  if (type === "weight") state.settings.currentWeight = value;
+  if (existing) Object.assign(existing, log, { id: existing.id });
+  else state.logs.push(log);
+  if (type === "weight") {
+    state.settings.currentWeight = value;
+    if (state.profile) state.profile.currentWeight = value;
+  }
   saveState("刚刚保存");
   document.querySelector("#log-dialog").close();
   renderDashboard();
   renderTimeline();
   renderInsights();
-  showToast(`${logConfig[type].name}记录已保存`);
+  showToast(existing ? "饮食记录已更新" : `${logConfig[type].name}记录已保存`);
+}
+
+function deleteMealRecord(id) {
+  const meal = state.logs.find(log => String(log.id) === String(id) && log.type === "meal");
+  if (!meal || !window.confirm(`删除“${meal.foodName || meal.note || "这条饮食"}”记录吗？`)) return;
+  state.logs = state.logs.filter(log => log !== meal);
+  saveState("饮食记录已删除");
+  renderDashboard();
+  renderTimeline();
+  showToast("饮食记录已删除");
 }
 
 function fillSettings() {
   const form = document.querySelector("#settings-form");
+  if (state.profile) {
+    for (const key of ["name", "signature", "currentWeight", "goalWeight", "height"]) {
+      if (form.elements[key]) form.elements[key].value = state.profile[key] ?? "";
+    }
+  }
   Object.entries(state.settings).forEach(([key, value]) => {
-    if (form.elements[key]) form.elements[key].value = value;
+    if (form.elements[key] && value !== null && !["currentWeight", "goalWeight", "height"].includes(key)) form.elements[key].value = value;
   });
 }
 
-function submitSettings(event) {
+function resizeAvatarImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file?.size) return resolve("");
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      const size = 360;
+      const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      canvas.getContext("2d").drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", .82));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("avatar decode failed"));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function submitOnboarding(event) {
   event.preventDefault();
   const data = new FormData(event.currentTarget);
-  const next = Object.fromEntries([...data.entries()].map(([key, value]) => [key, Number(value)]));
-  if (next.goalWeight >= next.currentWeight) {
+  const currentWeight = Number(data.get("currentWeight"));
+  const goalWeight = Number(data.get("goalWeight"));
+  if (goalWeight >= currentWeight) {
     showToast("目标体重应低于当前体重");
     return;
   }
-  state.settings = next;
-  saveState("目标已保存");
+  let avatar;
+  try {
+    avatar = await resizeAvatarImage(data.get("avatar"));
+  } catch {
+    showToast("头像读取失败，请重新选择");
+    return;
+  }
+  if (!avatar) {
+    showToast("请先选择头像");
+    return;
+  }
+  state.profile = {
+    avatar,
+    name: String(data.get("name") || "").trim(),
+    signature: String(data.get("signature") || "").trim(),
+    currentWeight,
+    goalWeight,
+    height: Number(data.get("height"))
+  };
+  Object.assign(state.settings, { currentWeight, goalWeight, height: state.profile.height });
+  state.logs.push({ id: Date.now(), type: "weight", value: currentWeight, note: "首次设置", at: new Date().toISOString() });
+  saveState("资料已保存");
+  document.querySelector("#onboarding-dialog").close();
+  fillSettings();
   renderDashboard();
-  showToast("目标已更新");
+  renderTimeline();
+  renderInsights();
+  showToast(`欢迎你，${state.profile.name}`);
+}
+
+async function submitSettings(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const currentWeight = Number(data.get("currentWeight"));
+  const goalWeight = Number(data.get("goalWeight"));
+  if (goalWeight >= currentWeight) {
+    showToast("目标体重应低于当前体重");
+    return;
+  }
+  let avatar = state.profile?.avatar || "";
+  const avatarFile = data.get("avatar");
+  if (avatarFile?.size) {
+    try {
+      avatar = await resizeAvatarImage(avatarFile);
+    } catch {
+      showToast("头像读取失败，请重新选择");
+      return;
+    }
+  }
+  state.profile = {
+    avatar,
+    name: String(data.get("name") || "").trim(),
+    signature: String(data.get("signature") || "").trim(),
+    currentWeight,
+    goalWeight,
+    height: Number(data.get("height"))
+  };
+  state.settings = {
+    ...state.settings,
+    currentWeight,
+    goalWeight,
+    height: state.profile.height,
+    energyTarget: Number(data.get("energyTarget")),
+    activityTarget: Number(data.get("activityTarget")),
+    waterTarget: Number(data.get("waterTarget")),
+    stepsTarget: Number(data.get("stepsTarget"))
+  };
+  saveState("资料已保存");
+  renderDashboard();
+  fillSettings();
+  showToast("个人资料已更新");
 }
 
 function setText(id, value) {
@@ -545,6 +725,8 @@ document.addEventListener("click", event => {
   const closeDialogButton = event.target.closest("[data-close-dialog]");
   const addStepsButton = event.target.closest("[data-steps-add]");
   const saveStepsButton = event.target.closest("[data-save-steps]");
+  const editMealButton = event.target.closest("[data-edit-meal]");
+  const deleteMealButton = event.target.closest("[data-delete-meal]");
 
   if (viewButton) setView(viewButton.dataset.view);
   if (viewLink) setView(viewLink.dataset.viewLink);
@@ -552,6 +734,8 @@ document.addEventListener("click", event => {
   if (closeDialogButton) document.querySelector("#log-dialog").close();
   if (addStepsButton) addSteps(Number(addStepsButton.dataset.stepsAdd));
   if (saveStepsButton) saveTodaySteps();
+  if (editMealButton) openLogDialog("meal", editMealButton.dataset.editMeal);
+  if (deleteMealButton) deleteMealRecord(deleteMealButton.dataset.deleteMeal);
   if (profileButton) setView("profile");
   if (filterButton) {
     activeFilter = filterButton.dataset.filter;
@@ -570,6 +754,8 @@ document.addEventListener("change", event => {
 });
 
 document.querySelector("#log-form").addEventListener("submit", submitLog);
+document.querySelector("#onboarding-form").addEventListener("submit", submitOnboarding);
+document.querySelector("#onboarding-dialog").addEventListener("cancel", event => event.preventDefault());
 document.querySelector("#settings-form").addEventListener("submit", submitSettings);
 document.querySelector("#video-url").addEventListener("input", updateVideoLink);
 document.querySelector("#open-video-link").addEventListener("click", openVideoLink);
@@ -596,6 +782,12 @@ renderDashboard();
 renderTimeline();
 renderInsights();
 updateVideoLink();
+window.CompanionSystem?.render(
+  document.querySelector("#companion-options"),
+  document.querySelector("#companion-preview"),
+  task => showToast(`${task.label}陪伴模块已预留`)
+);
+if (!hasCompletedProfile()) document.querySelector("#onboarding-dialog").showModal();
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));

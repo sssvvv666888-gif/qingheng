@@ -1,9 +1,10 @@
-const CACHE_NAME = "qingheng-pwa-v1";
+const CACHE_NAME = "qingheng-pwa-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./companion.js",
   "./manifest.webmanifest",
   "./assets/apple-touch-icon.png",
   "./assets/icon-192.png",

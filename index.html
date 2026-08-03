@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#153f35">
+  <meta name="theme-color" content="#f8c4cb">
   <meta name="description" content="轻衡——温和、可持续的减脂生活记录工具。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -40,15 +40,15 @@
           <p class="eyebrow" id="today-date"></p>
           <h1 id="view-title">早上好，慢慢来</h1>
         </div>
-        <button class="avatar" data-open-profile aria-label="打开个人设置">林</button>
+        <button class="avatar" data-open-profile aria-label="打开个人设置"><img id="topbar-avatar" alt=""><span id="topbar-avatar-fallback">我</span></button>
       </header>
 
       <section class="view is-active" id="view-today" data-title="早上好，慢慢来">
         <div class="hero-card">
           <div class="hero-copy">
             <span class="soft-label">本周节奏</span>
-            <h2>今天也慢悠悠地<br>照顾自己呀。</h2>
-            <p>好好吃一顿饭，轻松动一动，再给自己一个香香的好觉。</p>
+            <h2><span id="hero-user-name">今天</span>也慢悠悠地<br>照顾自己呀。</h2>
+            <p id="hero-signature">好好吃一顿饭，轻松动一动，再给自己一个香香的好觉。</p>
             <div class="hero-actions">
               <button class="primary-button" data-log="meal">记录一餐</button>
               <button class="text-button" data-view-link="records">查看全部记录 <span>→</span></button>
@@ -69,6 +69,17 @@
             <div><strong id="weekly-percent">0%</strong><span>本周完成</span></div>
           </div>
         </div>
+
+        <article class="panel home-profile-card" aria-label="我的资料摘要">
+          <div class="home-profile-main">
+            <div class="home-profile-avatar"><img id="home-profile-avatar" alt="用户头像"></div>
+            <div><p class="eyebrow">我的今日主页</p><h3 id="home-profile-name">—</h3><p id="home-profile-signature">—</p></div>
+          </div>
+          <div class="home-weight-pair">
+            <div><span>当前体重</span><strong><b id="home-current-weight">—</b> kg</strong></div>
+            <div><span>目标体重</span><strong><b id="home-goal-weight">—</b> kg</strong></div>
+          </div>
+        </article>
 
         <div class="section-heading">
           <div><p class="eyebrow">今日概览</p><h2>收集今天的小小进步</h2></div>
@@ -186,6 +197,16 @@
             </div>
           </article>
         </div>
+
+        <article class="panel companion-panel" id="companion-system">
+          <div class="panel-heading">
+            <div><p class="eyebrow">Timer / Companion System</p><h3>选择一段轻松熊陪伴时光</h3></div>
+            <span class="coming-soon-chip">功能预留</span>
+          </div>
+          <p class="companion-intro">计时页面与陪伴动画将在后续版本接入，现在可先选择想要的陪伴类型。</p>
+          <div class="companion-options" id="companion-options"></div>
+          <div class="companion-preview" id="companion-preview" aria-live="polite"></div>
+        </article>
       </section>
 
       <section class="view" id="view-records" data-title="记录，不评判">
@@ -223,16 +244,21 @@
       <section class="view" id="view-profile" data-title="我的节奏，我来定义">
         <div class="profile-layout">
           <article class="panel profile-card">
-            <div class="profile-avatar">林</div>
-            <h2>轻衡体验者</h2>
-            <p>不追求短期极端变化，建立可以长期维持的生活方式。</p>
+            <div class="profile-avatar"><img id="profile-avatar-image" alt="用户头像"></div>
+            <h2 id="profile-display-name">—</h2>
+            <p id="profile-display-signature">—</p>
+            <div class="profile-facts"><span><b id="profile-current-weight">—</b> kg 当前</span><span><b id="profile-goal-weight">—</b> kg 目标</span><span><b id="profile-height">—</b> cm</span></div>
             <div class="local-badge"><span class="status-dot"></span>本地模式</div>
           </article>
           <form class="panel settings-card" id="settings-form">
-            <div class="panel-heading"><div><p class="eyebrow">目标设置</p><h3>调整你的日常目标</h3></div></div>
+            <div class="panel-heading"><div><p class="eyebrow">个人资料 / 设置</p><h3>修改资料与日常目标</h3></div></div>
             <div class="form-grid">
+              <label class="avatar-field">头像<input type="file" name="avatar" accept="image/*"><small class="field-hint">不选新图片时保留原头像。</small></label>
+              <label>用户名称<input type="text" name="name" maxlength="20" required></label>
+              <label class="signature-field">个性签名<input type="text" name="signature" maxlength="60" required></label>
               <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" required></label>
               <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" required></label>
+              <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" required></label>
               <label>每日能量预算（kcal）<input type="number" name="energyTarget" min="1200" max="4000" step="10" required></label>
               <label>每日活动目标（分钟）<input type="number" name="activityTarget" min="5" max="240" step="5" required></label>
               <label>每日饮水目标（ml）<input type="number" name="waterTarget" min="500" max="5000" step="100" required></label>
@@ -259,13 +285,33 @@
       <p class="eyebrow">快速记录</p>
       <h2 id="dialog-title">记录一餐</h2>
       <input type="hidden" name="type" value="meal">
+      <input type="hidden" name="editId" value="">
       <div id="dynamic-fields"></div>
       <label>备注（可选）<input type="text" name="note" maxlength="60" placeholder="例如：午餐，七分饱"></label>
       <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存记录</button></div>
     </form>
   </dialog>
 
+  <dialog id="onboarding-dialog" class="onboarding-dialog">
+    <form id="onboarding-form">
+      <div class="onboarding-bears" aria-hidden="true"><img src="assets/rilakkuma-from-setting.png" alt=""><img src="assets/korilakkuma-from-setting.png" alt=""></div>
+      <p class="eyebrow">第一次见面</p>
+      <h2>先认识一下你吧 🍓</h2>
+      <p class="onboarding-copy">资料只保存在当前设备。全部填写后，轻衡才会进入主页。</p>
+      <div class="onboarding-grid">
+        <label class="avatar-field">头像<input type="file" name="avatar" accept="image/*" required></label>
+        <label>用户名称<input type="text" name="name" maxlength="20" autocomplete="nickname" required></label>
+        <label class="signature-field">个性签名<input type="text" name="signature" maxlength="60" required></label>
+        <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" inputmode="decimal" required></label>
+        <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" inputmode="decimal" required></label>
+        <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" inputmode="numeric" required></label>
+      </div>
+      <button class="primary-button onboarding-save" type="submit">保存并进入轻衡</button>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="companion.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
