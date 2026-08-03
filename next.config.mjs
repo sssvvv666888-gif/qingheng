@@ -1,6 +1,4 @@
 const nextConfig = {
-  distDir: "dist",
-  output: "standalone",
   poweredByHeader: false
 };
 
