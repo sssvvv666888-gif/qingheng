@@ -165,7 +165,10 @@ button { color: inherit; }
 .trend-stat span, .trend-stat strong { display: block; }
 .trend-stat span { color: #aac0b8; font-size: 10px; }
 .trend-stat strong { margin-top: 7px; color: var(--lime); font-size: 28px; }
-.trend-toggle { position: absolute; right: 20px; bottom: 18px; width: 38px; height: 38px; border: 2px solid rgba(255,255,255,.72); border-radius: 50%; display: grid; place-items: center; color: #76575f; background: rgba(255,255,255,.72); cursor: pointer; font-size: 23px; line-height: 1; transition: transform .2s ease, background .2s ease; }
+.trend-completion { width: max-content; margin-bottom: 12px; padding: 7px 10px; border: 1px solid rgba(255,255,255,.72); border-radius: 999px; display: flex; align-items: center; gap: 8px; color: #806e75; background: rgba(255,255,255,.48); font-size: 10px; }
+.trend-completion strong { color: #b96070; font-size: 13px; }
+.trend-toggle { position: absolute; right: 20px; bottom: 18px; width: 38px; height: 38px; padding: 0; border: 2px solid rgba(255,255,255,.72); border-radius: 50%; display: grid; place-items: center; color: #76575f; background: rgba(255,255,255,.72); cursor: pointer; line-height: 1; transition: transform .2s ease, background .2s ease; }
+.trend-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .trend-toggle:hover { background: white; }
 .trend-toggle[aria-expanded="true"] { transform: rotate(180deg); }
 .chart-panel { margin-top: 16px; min-height: 340px; }

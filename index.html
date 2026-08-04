@@ -84,18 +84,16 @@
 
         <section class="today-trend-section" aria-labelledby="today-weight-trend-title">
           <div class="insight-hero">
-            <div><p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p></div>
+            <div class="trend-copy">
+              <div class="trend-completion"><span>轻计划完成度</span><strong id="insight-completion">—</strong></div>
+              <p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p>
+            </div>
             <div class="trend-stat"><span>7 天内变化</span><strong id="weight-change">—</strong></div>
-            <button class="trend-toggle" type="button" data-toggle-weight-chart aria-expanded="false" aria-controls="weight-chart-panel" aria-label="展开体重折线图">⌄</button>
+            <button class="trend-toggle" type="button" data-toggle-weight-chart aria-expanded="false" aria-controls="weight-chart-panel" aria-label="展开体重折线图"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
           </div>
           <article class="panel chart-panel" id="weight-chart-panel" hidden>
             <div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div>
           </article>
-          <div class="insight-grid">
-            <article class="panel insight-card"><span>完成度</span><strong id="insight-completion">0%</strong><p>基于本周每日任务完成情况</p></article>
-            <article class="panel insight-card"><span>活动累计</span><strong id="insight-activity">0 分钟</strong><p>有记录的活动都算进来</p></article>
-            <article class="panel insight-card"><span>数据变化</span><strong>温柔看趋势</strong><p>单日波动不代表长期方向。</p></article>
-          </div>
         </section>
 
         <article class="panel today-meals-panel">
