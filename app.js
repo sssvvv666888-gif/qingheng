@@ -113,7 +113,7 @@ function setView(name) {
   document.querySelector("#view-title").textContent = name === "today" && hasCompletedProfile() ? greetingTitle() : (view?.dataset.title || "轻衡");
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (name === "records") renderTimeline();
-  if (name === "insights") renderInsights();
+  if (name === "today") renderInsights();
   if (name === "profile") fillSettings();
 }
 
@@ -132,6 +132,7 @@ function renderProfileSummary() {
   setText("home-profile-signature", profile.signature);
   setText("home-current-weight", formatValue(profile.currentWeight));
   setText("home-goal-weight", formatValue(profile.goalWeight));
+  setText("home-weight-distance", formatValue(Math.abs(Number(profile.currentWeight) - Number(profile.goalWeight))));
   setText("profile-display-name", profile.name);
   setText("profile-display-signature", profile.signature);
   setText("profile-current-weight", formatValue(profile.currentWeight));
@@ -259,7 +260,15 @@ function renderTimeline() {
 }
 
 function renderInsights() {
-  const weights = state.logs.filter(log => log.type === "weight").sort((a, b) => new Date(a.at) - new Date(b.at)).slice(-7);
+  const cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - 6);
+  const latestWeightByDay = new Map();
+  state.logs
+    .filter(log => log.type === "weight" && new Date(log.at) >= cutoff)
+    .sort((a, b) => new Date(a.at) - new Date(b.at))
+    .forEach(log => latestWeightByDay.set(dateInputValue(log.at), log));
+  const weights = [...latestWeightByDay.values()];
   const change = weights.length > 1 ? Number(weights.at(-1).value) - Number(weights[0].value) : null;
   setText("weight-change", change === null ? "—" : `${change > 0 ? "+" : ""}${change.toFixed(1)} kg`);
   setText("insight-completion", `${Math.round(state.tasks.filter(task => task.done).length / state.tasks.length * 100)}%`);
@@ -641,6 +650,7 @@ async function submitSettings(event) {
   const data = new FormData(event.currentTarget);
   const currentWeight = Number(data.get("currentWeight"));
   const goalWeight = Number(data.get("goalWeight"));
+  const previousWeight = Number(state.profile?.currentWeight);
   if (goalWeight >= currentWeight) {
     showToast("目标体重应低于当前体重");
     return;
@@ -673,8 +683,13 @@ async function submitSettings(event) {
     waterTarget: Number(data.get("waterTarget")),
     stepsTarget: Number(data.get("stepsTarget"))
   };
+  if (Number.isFinite(previousWeight) && previousWeight !== currentWeight) {
+    state.logs.push({ id: Date.now(), type: "weight", value: currentWeight, note: "资料更新", at: new Date().toISOString() });
+  }
   saveState("资料已保存");
   renderDashboard();
+  renderTimeline();
+  renderInsights();
   fillSettings();
   showToast("个人资料已更新");
 }
