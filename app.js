@@ -269,15 +269,19 @@ function renderInsights() {
     .sort((a, b) => new Date(a.at) - new Date(b.at))
     .forEach(log => latestWeightByDay.set(dateInputValue(log.at), log));
   const weights = [...latestWeightByDay.values()];
+  if (!weights.length && Number(state.profile?.currentWeight) > 0) {
+    weights.push({ type: "weight", value: Number(state.profile.currentWeight), at: new Date().toISOString() });
+  }
   const change = weights.length > 1 ? Number(weights.at(-1).value) - Number(weights[0].value) : null;
   setText("weight-change", change === null ? "—" : `${change > 0 ? "+" : ""}${change.toFixed(1)} kg`);
-  setText("insight-completion", `${Math.round(state.tasks.filter(task => task.done).length / state.tasks.length * 100)}%`);
+  const completedTasks = state.tasks.filter(task => task.done).length;
+  setText("insight-completion", completedTasks ? `${Math.round(completedTasks / state.tasks.length * 100)}%` : "—");
   const allActivity = state.logs.reduce((sum, log) => {
     if (log.type === "activity") return sum + Number(log.value || 0);
     if (log.type === "video") return sum + Number(log.duration || 0);
     return sum;
   }, 0);
-  setText("insight-activity", `${Math.round(allActivity)} 分钟`);
+  setText("insight-activity", allActivity > 0 ? `${Math.round(allActivity)} 分钟` : "—");
   renderWeightChart(weights);
 }
 
