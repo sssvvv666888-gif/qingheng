@@ -44,38 +44,6 @@
       </header>
 
       <section class="view is-active" id="view-today" data-title="早上好，慢慢来">
-        <article class="panel home-profile-card" aria-label="我的资料摘要">
-          <div class="home-profile-main">
-            <div class="home-profile-avatar"><img id="home-profile-avatar" alt="用户头像"></div>
-            <div><p class="eyebrow">我的今日主页</p><h3 id="home-profile-name">—</h3><p id="home-profile-signature">—</p></div>
-          </div>
-          <div class="home-weight-pair">
-            <div><span>当前体重</span><strong><b id="home-current-weight">—</b> kg</strong></div>
-            <div><span>目标体重</span><strong><b id="home-goal-weight">—</b> kg</strong></div>
-            <div><span>距离目标</span><strong><b id="home-weight-distance">—</b> kg</strong></div>
-          </div>
-        </article>
-
-        <section class="today-trend-section" aria-labelledby="today-weight-trend-title">
-          <div class="insight-hero">
-            <div><p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p></div>
-            <div class="trend-stat"><span>7 天内变化</span><strong id="weight-change">—</strong></div>
-          </div>
-          <article class="panel chart-panel">
-            <div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div>
-          </article>
-          <div class="insight-grid">
-            <article class="panel insight-card"><span>完成度</span><strong id="insight-completion">0%</strong><p>基于本周每日任务完成情况</p></article>
-            <article class="panel insight-card"><span>活动累计</span><strong id="insight-activity">0 分钟</strong><p>有记录的活动都算进来</p></article>
-            <article class="panel insight-card"><span>数据变化</span><strong>温柔看趋势</strong><p>单日波动不代表长期方向。</p></article>
-          </div>
-        </section>
-
-        <article class="panel today-meals-panel">
-          <div class="panel-heading"><div><p class="eyebrow">今日饮食</p><h3>今天吃了什么</h3></div><button class="meal-add-button" type="button" data-log="meal">＋ 记录一餐</button></div>
-          <div class="meal-card-grid" id="today-meals"></div>
-        </article>
-
         <div class="hero-card">
           <div class="hero-copy">
             <span class="soft-label">本周节奏</span>
@@ -101,6 +69,39 @@
             <div><strong id="weekly-percent">0%</strong><span>本周完成</span></div>
           </div>
         </div>
+
+        <article class="panel home-profile-card" aria-label="我的资料摘要">
+          <div class="home-profile-main">
+            <div class="home-profile-avatar"><img id="home-profile-avatar" alt="用户头像"></div>
+            <div><p class="eyebrow">我的今日主页</p><h3 id="home-profile-name">—</h3><p id="home-profile-signature">—</p></div>
+          </div>
+          <div class="home-weight-pair">
+            <div><span>当前体重</span><strong><b id="home-current-weight">—</b> kg</strong></div>
+            <div><span>目标体重</span><strong><b id="home-goal-weight">—</b> kg</strong></div>
+            <div><span>距离目标</span><strong><b id="home-weight-distance">—</b> kg</strong></div>
+          </div>
+        </article>
+
+        <section class="today-trend-section" aria-labelledby="today-weight-trend-title">
+          <div class="insight-hero">
+            <div><p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p></div>
+            <div class="trend-stat"><span>7 天内变化</span><strong id="weight-change">—</strong></div>
+            <button class="trend-toggle" type="button" data-toggle-weight-chart aria-expanded="false" aria-controls="weight-chart-panel" aria-label="展开体重折线图">⌄</button>
+          </div>
+          <article class="panel chart-panel" id="weight-chart-panel" hidden>
+            <div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div>
+          </article>
+          <div class="insight-grid">
+            <article class="panel insight-card"><span>完成度</span><strong id="insight-completion">0%</strong><p>基于本周每日任务完成情况</p></article>
+            <article class="panel insight-card"><span>活动累计</span><strong id="insight-activity">0 分钟</strong><p>有记录的活动都算进来</p></article>
+            <article class="panel insight-card"><span>数据变化</span><strong>温柔看趋势</strong><p>单日波动不代表长期方向。</p></article>
+          </div>
+        </section>
+
+        <article class="panel today-meals-panel">
+          <div class="panel-heading"><div><p class="eyebrow">今日饮食</p><h3>今天吃了什么</h3></div><button class="meal-add-button" type="button" data-log="meal">＋ 记录一餐</button></div>
+          <div class="meal-card-grid" id="today-meals"></div>
+        </article>
 
         <div class="section-heading">
           <div><p class="eyebrow">今日概览</p><h2>收集今天的小小进步</h2></div>
@@ -199,7 +200,7 @@
 
         <div class="content-grid">
           <article class="panel plan-panel">
-            <div class="panel-heading"><div><p class="eyebrow">轻计划</p><h3>今天做这三件事</h3></div><span id="task-count">0 / 3</span></div>
+            <div class="panel-heading"><div><p class="eyebrow">轻计划</p><h3>今天的小小计划</h3></div><div class="plan-heading-actions"><span id="task-count">0 / 0</span><button type="button" data-edit-tasks>编辑计划</button></div></div>
             <div class="task-list" id="task-list"></div>
           </article>
 
@@ -293,6 +294,18 @@
       <div id="dynamic-fields"></div>
       <label>备注（可选）<input type="text" name="note" maxlength="60" placeholder="例如：午餐，七分饱"></label>
       <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存记录</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="task-dialog" class="task-dialog">
+    <form id="task-form">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
+      <p class="eyebrow">自定义轻计划</p>
+      <h2>今天想完成什么？</h2>
+      <p class="task-editor-copy">可以修改内容、增加或删除任务，最多设置 10 项。</p>
+      <div class="task-editor-list" id="task-editor-list"></div>
+      <button class="task-add-row" type="button" data-add-task-row>＋ 增加一项</button>
+      <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存轻计划</button></div>
     </form>
   </dialog>
 

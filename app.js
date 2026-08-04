@@ -184,7 +184,7 @@ function renderDashboard() {
   setBar("burn-calorie-bar", burned / calorieScale);
 
   const done = state.tasks.filter(task => task.done).length;
-  const completion = Math.round((done / state.tasks.length) * 100);
+  const completion = state.tasks.length ? Math.round((done / state.tasks.length) * 100) : 0;
   setText("task-count", `${done} / ${state.tasks.length}`);
   setText("weekly-percent", `${completion}%`);
   document.querySelector("#weekly-ring").style.strokeDashoffset = String(345.6 * (1 - completion / 100));
@@ -221,12 +221,80 @@ function formatMealDate(log) {
 
 function renderTasks() {
   const list = document.querySelector("#task-list");
+  if (!state.tasks.length) {
+    list.innerHTML = '<div class="empty-state">点击“编辑计划”，写下今天想完成的小事。</div>';
+    return;
+  }
   list.innerHTML = state.tasks.map(task => `
     <label class="task-item">
       <input type="checkbox" data-task="${task.id}" ${task.done ? "checked" : ""}>
       <span class="task-check">✓</span>
       <div><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.hint)}</small></div>
     </label>`).join("");
+}
+
+function taskEditorRow(task = {}, index = 0) {
+  const id = task.id || `task-${Date.now()}-${index}`;
+  return `<div class="task-editor-row" data-task-editor-row>
+    <input type="hidden" name="taskId" value="${escapeHtml(id)}">
+    <label>任务内容<input type="text" name="taskTitle" maxlength="36" value="${escapeHtml(task.title || "")}" placeholder="例如：阅读 20 分钟" required></label>
+    <label>小提示（可选）<input type="text" name="taskHint" maxlength="60" value="${escapeHtml(task.hint || "")}" placeholder="例如：读完今天这一章"></label>
+    <button class="task-remove-row" type="button" data-remove-task-row aria-label="删除这项任务">×</button>
+  </div>`;
+}
+
+function openTaskEditor() {
+  const list = document.querySelector("#task-editor-list");
+  const tasks = state.tasks.length ? state.tasks : [{}];
+  list.innerHTML = tasks.map(taskEditorRow).join("");
+  document.querySelector("#task-dialog").showModal();
+}
+
+function addTaskEditorRow() {
+  const list = document.querySelector("#task-editor-list");
+  if (list.querySelectorAll("[data-task-editor-row]").length >= 10) {
+    showToast("轻计划最多设置 10 项");
+    return;
+  }
+  list.insertAdjacentHTML("beforeend", taskEditorRow({}, list.children.length));
+  list.lastElementChild.querySelector('[name="taskTitle"]').focus();
+}
+
+function removeTaskEditorRow(button) {
+  const list = document.querySelector("#task-editor-list");
+  if (list.querySelectorAll("[data-task-editor-row]").length <= 1) {
+    showToast("至少保留一项轻计划");
+    return;
+  }
+  button.closest("[data-task-editor-row]").remove();
+}
+
+function submitTaskEditor(event) {
+  event.preventDefault();
+  const previousTasks = new Map(state.tasks.map(task => [String(task.id), task]));
+  const rows = [...document.querySelectorAll("#task-editor-list [data-task-editor-row]")];
+  state.tasks = rows.map((row, index) => {
+    const id = String(row.querySelector('[name="taskId"]').value || `task-${Date.now()}-${index}`);
+    return {
+      id,
+      title: row.querySelector('[name="taskTitle"]').value.trim(),
+      hint: row.querySelector('[name="taskHint"]').value.trim(),
+      done: Boolean(previousTasks.get(id)?.done)
+    };
+  });
+  saveState("轻计划已保存");
+  renderDashboard();
+  renderInsights();
+  document.querySelector("#task-dialog").close();
+  showToast(`已设置 ${state.tasks.length} 项轻计划`);
+}
+
+function toggleWeightChart(button) {
+  const panel = document.querySelector("#weight-chart-panel");
+  const shouldExpand = panel.hidden;
+  panel.hidden = !shouldExpand;
+  button.setAttribute("aria-expanded", String(shouldExpand));
+  button.setAttribute("aria-label", shouldExpand ? "收起体重折线图" : "展开体重折线图");
 }
 
 function renderTimeline() {
@@ -746,15 +814,23 @@ document.addEventListener("click", event => {
   const saveStepsButton = event.target.closest("[data-save-steps]");
   const editMealButton = event.target.closest("[data-edit-meal]");
   const deleteMealButton = event.target.closest("[data-delete-meal]");
+  const trendToggleButton = event.target.closest("[data-toggle-weight-chart]");
+  const editTasksButton = event.target.closest("[data-edit-tasks]");
+  const addTaskRowButton = event.target.closest("[data-add-task-row]");
+  const removeTaskRowButton = event.target.closest("[data-remove-task-row]");
 
   if (viewButton) setView(viewButton.dataset.view);
   if (viewLink) setView(viewLink.dataset.viewLink);
   if (logButton) openLogDialog(logButton.dataset.log);
-  if (closeDialogButton) document.querySelector("#log-dialog").close();
+  if (closeDialogButton) closeDialogButton.closest("dialog")?.close();
   if (addStepsButton) addSteps(Number(addStepsButton.dataset.stepsAdd));
   if (saveStepsButton) saveTodaySteps();
   if (editMealButton) openLogDialog("meal", editMealButton.dataset.editMeal);
   if (deleteMealButton) deleteMealRecord(deleteMealButton.dataset.deleteMeal);
+  if (trendToggleButton) toggleWeightChart(trendToggleButton);
+  if (editTasksButton) openTaskEditor();
+  if (addTaskRowButton) addTaskEditorRow();
+  if (removeTaskRowButton) removeTaskEditorRow(removeTaskRowButton);
   if (profileButton) setView("profile");
   if (filterButton) {
     activeFilter = filterButton.dataset.filter;
@@ -773,6 +849,7 @@ document.addEventListener("change", event => {
 });
 
 document.querySelector("#log-form").addEventListener("submit", submitLog);
+document.querySelector("#task-form").addEventListener("submit", submitTaskEditor);
 document.querySelector("#onboarding-form").addEventListener("submit", submitOnboarding);
 document.querySelector("#onboarding-dialog").addEventListener("cancel", event => event.preventDefault());
 document.querySelector("#settings-form").addEventListener("submit", submitSettings);
