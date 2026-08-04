@@ -42,7 +42,7 @@ export default {
     const headers = {
       "Content-Type": asset.contentType,
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control": path === "/sw.js" || path === "/index.html" ? "no-cache" : "public, max-age=86400"
+      "Cache-Control": /\.(?:html|css|js|webmanifest)$/.test(path) ? "no-cache" : "public, max-age=86400"
     };
     return new Response(decode(asset.body), { status: 200, headers });
   }
