@@ -22,9 +22,9 @@
       </a>
 
       <nav class="nav-list">
-        <button class="nav-item is-active" data-view="today"><span>◉</span>今日</button>
-        <button class="nav-item" data-view="records"><span>≋</span>记录</button>
-        <button class="nav-item" data-view="companion"><span>♡</span>陪伴</button>
+        <button class="nav-item is-active" data-view="today"><span>◉</span>首页</button>
+        <button class="nav-item" data-view="nutrition"><span>食</span>饮食</button>
+        <button class="nav-item" data-view="exercise"><span>动</span>运动</button>
         <button class="nav-item" data-view="profile"><span>◎</span>我的</button>
       </nav>
 
@@ -40,19 +40,19 @@
           <p class="eyebrow" id="today-date"></p>
           <h1 id="view-title">早上好，慢慢来</h1>
         </div>
-        <button class="avatar" data-open-profile aria-label="打开个人设置"><img id="topbar-avatar" alt=""><span id="topbar-avatar-fallback">我</span></button>
+        <div class="topbar-actions"><button class="avatar" data-open-profile aria-label="打开我的页面"><img id="topbar-avatar" alt=""><span class="blank-avatar-icon" id="topbar-avatar-fallback" aria-hidden="true"></span></button></div>
       </header>
 
-      <section class="view is-active" id="view-today" data-title="早上好，慢慢来">
+      <section class="view is-active" id="view-today" data-title="今天也慢慢来">
+        <div class="home-mode-toolbar" aria-label="首页内容模式">
+          <div><span>首页模式</span><strong id="home-mode-label">个人健康</strong></div>
+          <div class="health-mode-switch"><button class="is-active" type="button" data-health-mode="personal">个人</button><button type="button" data-health-mode="family">家庭</button></div>
+        </div>
+        <div id="home-personal-dashboard">
         <div class="hero-card">
-          <div class="hero-copy">
-            <span class="soft-label">本周节奏</span>
-            <h2><span id="hero-user-name">今天</span>也慢悠悠地<br>照顾自己呀。</h2>
-            <p id="hero-signature">好好吃一顿饭，轻松动一动，再给自己一个香香的好觉。</p>
-            <div class="hero-actions">
-              <button class="primary-button" data-log="meal">记录一餐</button>
-              <button class="text-button" data-view-link="records">查看全部记录 <span>→</span></button>
-            </div>
+          <div class="hero-plan">
+            <div class="hero-plan-heading"><div><div class="hero-plan-labels"><span class="soft-label">轻计划</span><span class="home-check-in-pill">🧸 连续打卡 <b id="home-check-in-continuous">0</b> 天</span></div><h2>今天的小小计划</h2></div><div class="plan-heading-actions"><span id="task-count">0 / 0</span><button type="button" data-edit-tasks>编辑计划</button></div></div>
+            <div class="task-list" id="task-list"></div>
           </div>
           <div class="hero-side" aria-hidden="true">
             <div class="setting-bears">
@@ -72,29 +72,58 @@
 
         <article class="panel home-profile-card" aria-label="我的资料摘要">
           <div class="home-profile-main">
-            <div class="home-profile-avatar"><img id="home-profile-avatar" alt="用户头像"></div>
+            <div class="home-profile-avatar"><img id="home-profile-avatar" alt="用户头像"><span class="blank-avatar-icon" id="home-profile-avatar-fallback" aria-hidden="true"></span></div>
             <div><p class="eyebrow">我的今日主页</p><h3 id="home-profile-name">—</h3><p id="home-profile-signature">—</p></div>
           </div>
           <div class="home-weight-pair">
             <div><span>当前体重</span><strong><b id="home-current-weight">—</b> kg</strong></div>
             <div><span>目标体重</span><strong><b id="home-goal-weight">—</b> kg</strong></div>
             <div><span>距离目标</span><strong><b id="home-weight-distance">—</b> kg</strong></div>
+            <div><span>BMI</span><strong><b id="home-bmi-value">—</b> <em id="home-bmi-status"></em></strong></div>
           </div>
         </article>
 
-        <section class="today-trend-section" aria-labelledby="today-weight-trend-title">
-          <div class="insight-hero">
-            <div class="trend-copy">
-              <div class="trend-completion"><span>轻计划完成度</span><strong id="insight-completion">—</strong></div>
-              <p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p>
-            </div>
-            <div class="trend-stat"><span>7 天内变化</span><strong id="weight-change">—</strong></div>
-            <button class="trend-toggle" type="button" data-toggle-weight-chart aria-expanded="false" aria-controls="weight-chart-panel" aria-label="展开体重折线图"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+        <article class="panel health-score-card" aria-labelledby="health-score-title">
+          <div class="health-score-main">
+            <div class="health-score-ring" id="health-score-ring"><strong><b id="health-score-total">0</b><small>分</small></strong><span>今日健康指数</span></div>
+            <div><p class="eyebrow">今日健康评分</p><h3 id="health-score-title">三项健康节奏</h3><p class="health-score-advice"><strong>今日建议</strong><span id="health-score-advice">记录健康数据后会生成建议。</span></p></div>
           </div>
-          <article class="panel chart-panel" id="weight-chart-panel" hidden>
-            <div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div>
+          <div class="health-score-components">
+            <div><span>饮食 <b id="health-score-diet">0</b></span><i><em id="health-score-diet-bar"></em></i></div>
+            <div><span>运动 <b id="health-score-exercise">0</b></span><i><em id="health-score-exercise-bar"></em></i></div>
+            <div><span>饮水 <b id="health-score-water">0</b></span><i><em id="health-score-water-bar"></em></i></div>
+          </div>
+        </article>
+
+        <div class="content-grid home-quick-records">
+          <article class="panel quick-panel">
+            <div class="panel-heading"><div><p class="eyebrow">快捷记录</p><h3>轻轻一点，就记好啦</h3></div><button class="mini-link-button" type="button" data-view-link="records">查看全部记录</button></div>
+            <div class="quick-grid">
+              <button data-log="meal"><span>＋</span><strong>饮食</strong><small>能量与备注</small></button>
+              <button data-log="activity"><span>＋</span><strong>运动</strong><small>类型与时长</small></button>
+              <button data-log="water"><span>＋</span><strong>饮水</strong><small>快速加一杯</small></button>
+              <button data-log="weight"><span>＋</span><strong>体重</strong><small>关注长期趋势</small></button>
+            </div>
           </article>
-        </section>
+        </div>
+
+        <article class="panel nutrition-summary-card" aria-labelledby="nutrition-summary-title">
+          <div class="nutrition-summary-copy">
+            <div class="panel-heading"><div><p class="eyebrow">今日饮食</p><h3 id="nutrition-summary-title">今天还能吃多少？</h3></div><button class="meal-add-button" type="button" data-log="meal">＋ 添加饮食</button></div>
+            <div class="nutrition-summary-values">
+              <div><span>今日目标</span><strong><b id="nutrition-target">1850</b> kcal</strong></div>
+              <div><span>今日已摄入</span><strong><b id="nutrition-consumed">0</b> kcal</strong></div>
+              <div><span>剩余可摄入</span><strong><b id="nutrition-remaining">1850</b> kcal</strong></div>
+            </div>
+            <div class="nutrition-macro-line"><span>蛋白质 <b id="nutrition-protein">0</b>g</span><span>碳水 <b id="nutrition-carbs">0</b>g</span><span>脂肪 <b id="nutrition-fat">0</b>g</span></div>
+            <p class="nutrition-alert" id="nutrition-alert">记录饮食后会自动计算剩余热量。</p>
+            <button class="text-button nutrition-page-link" type="button" data-view-link="nutrition">查看智能食谱推荐 <span>→</span></button>
+          </div>
+          <div class="nutrition-ring" id="nutrition-ring" aria-label="今日热量摄入进度">
+            <svg viewBox="0 0 140 140"><circle class="nutrition-ring-track" cx="70" cy="70" r="56"></circle><circle class="nutrition-ring-value" id="nutrition-ring-value" cx="70" cy="70" r="56"></circle></svg>
+            <div><strong id="nutrition-percentage">0%</strong><span><b id="nutrition-ring-consumed">0</b> / <b id="nutrition-ring-target">1850</b> kcal</span></div>
+          </div>
+        </article>
 
         <article class="panel today-meals-panel">
           <div class="panel-heading"><div><p class="eyebrow">今日饮食</p><h3>今天吃了什么</h3></div><button class="meal-add-button" type="button" data-log="meal">＋ 记录一餐</button></div>
@@ -157,62 +186,34 @@
             </div>
           </article>
 
-          <article class="panel video-panel">
-            <div class="panel-heading">
-              <div><p class="eyebrow">运动视频</p><h3>粘贴链接，计时跟练</h3></div>
-              <span class="local-video-badge" id="video-platform-badge">支持三平台</span>
-            </div>
-            <div class="video-link-box">
-              <label>抖音 / 小红书 / 哔哩哔哩链接
-                <input id="video-url" type="url" inputmode="url" placeholder="粘贴运动视频链接">
-              </label>
-              <button class="secondary-button" id="open-video-link" type="button" disabled>打开视频 ↗</button>
-            </div>
-            <div class="video-stats">
-              <div><span>有效跟练时间</span><strong id="video-time">00:00</strong></div>
-              <div><span>本次估算</span><strong><b id="video-burn">0</b> kcal</strong></div>
-              <div><span>今日累计</span><strong><b id="today-burn">0</b> kcal</strong></div>
-            </div>
-            <div class="timer-actions">
-              <button class="primary-button" id="start-video-timer" type="button" disabled>开始计时</button>
-              <button class="secondary-button" id="pause-video-timer" type="button" disabled>暂停</button>
-              <button class="secondary-button" id="reset-video-timer" type="button" disabled>重置</button>
-            </div>
-            <div class="video-controls-grid">
-              <label>运动强度
-                <select id="video-intensity">
-                  <option value="3.3">轻松拉伸</option>
-                  <option value="4.5">轻快健身操</option>
-                  <option value="6.0" selected>中等强度跟练</option>
-                  <option value="8.0">高强度间歇</option>
-                </select>
-              </label>
-              <label>消耗热量（kcal）<input id="video-calories-input" type="number" min="0" max="5000" step="1" value="0"></label>
-            </div>
-            <div class="video-actions">
-              <button class="primary-button" id="save-video-session" type="button" disabled>保存本次跟练</button>
-            </div>
-            <p class="estimate-note">网页无法读取外部平台的播放状态，请在打开视频后手动开始/暂停。热量为粗略估算，可按设备数据修改。</p>
-          </article>
         </div>
 
-        <div class="content-grid">
-          <article class="panel plan-panel">
-            <div class="panel-heading"><div><p class="eyebrow">轻计划</p><h3>今天的小小计划</h3></div><div class="plan-heading-actions"><span id="task-count">0 / 0</span><button type="button" data-edit-tasks>编辑计划</button></div></div>
-            <div class="task-list" id="task-list"></div>
-          </article>
-
-          <article class="panel quick-panel">
-            <div class="panel-heading"><div><p class="eyebrow">快捷记录</p><h3>轻轻一点，就记好啦</h3></div></div>
-            <div class="quick-grid">
-              <button data-log="meal"><span>＋</span><strong>饮食</strong><small>能量与备注</small></button>
-              <button data-log="activity"><span>＋</span><strong>运动</strong><small>类型与时长</small></button>
-              <button data-log="water"><span>＋</span><strong>饮水</strong><small>快速加一杯</small></button>
-              <button data-log="weight"><span>＋</span><strong>体重</strong><small>关注长期趋势</small></button>
-            </div>
-          </article>
         </div>
+        <section class="home-family-dashboard" id="home-family-dashboard" hidden>
+          <div id="family-home-host"></div>
+        </section>
+      </section>
 
+      <section class="view" id="view-exercise" data-title="今天也要轻轻动一动">
+        <div class="exercise-page-hero panel">
+          <div><p class="eyebrow">AI 运动建议中心</p><h2>今天动一动</h2><p>根据今天的饮食、身体数据和活动量，给你一份温和可完成的建议。</p></div>
+          <div class="exercise-goal-summary"><span>今日运动目标<strong><b id="exercise-goal-minutes">30</b> 分钟</strong></span><span>当前完成<strong><b id="exercise-page-minutes">0</b> / <b id="exercise-goal-minutes-copy">30</b> 分钟</strong></span><span>预计消耗<strong><b id="exercise-goal-calories">0</b> kcal</strong></span></div>
+          <div class="exercise-goal-progress"><i id="exercise-goal-progress-bar"></i></div>
+        </div>
+        <article class="panel ai-exercise-card">
+          <div class="ai-exercise-heading"><div><p class="eyebrow">今日智能推荐</p><h3>AI 建议今天这样运动</h3></div><span class="cute-chip" id="exercise-activity-level">活动较少</span></div>
+          <div class="ai-exercise-body">
+            <div class="ai-exercise-context"><span>今日摄入<strong><b id="exercise-ai-intake">0</b> kcal</strong></span><span>今日活动<strong id="exercise-ai-activity">较少</strong></span><span>健康目标<strong id="exercise-ai-goal">保持体重</strong></span></div>
+            <div class="ai-exercise-recommendation"><span class="ai-exercise-icon" id="exercise-ai-icon">🚶</span><div><small>今日推荐</small><h2 id="exercise-ai-name">快走</h2><p><b id="exercise-ai-minutes">30</b> 分钟 · 预计消耗 <b id="exercise-ai-calories">120</b> kcal</p></div><button class="primary-button" type="button" id="exercise-ai-start">记录这项运动</button></div>
+            <p class="ai-exercise-reason"><strong>推荐原因</strong><span id="exercise-ai-reason">今天活动量较少，建议从低强度有氧运动开始。</span></p>
+          </div>
+        </article>
+        <div class="exercise-assistant-grid">
+          <article class="panel exercise-type-card"><div class="panel-heading"><div><p class="eyebrow">快捷选择</p><h3>选择你想完成的运动</h3></div></div><div class="exercise-type-list" id="exercise-type-list"></div></article>
+          <article class="panel exercise-balance-card"><div><p class="eyebrow">运动与饮食联动</p><h3>今天的热量平衡</h3></div><div class="exercise-balance-values"><span>今日摄入<strong><b id="exercise-balance-intake">0</b> kcal</strong></span><span>运动消耗<strong><b id="exercise-page-calories">0</b> kcal</strong></span></div><p id="exercise-balance-advice">完成一项运动后，这里会给出今天的平衡建议。</p></article>
+        </div>
+        <div id="exercise-tools-host"></div>
+        <article class="panel exercise-history-card"><div class="panel-heading"><div><p class="eyebrow">运动记录</p><h3>今天完成的活动</h3></div><button class="meal-add-button" type="button" data-log="activity">＋ 记录运动</button></div><div class="exercise-history" id="exercise-history"></div></article>
       </section>
 
       <section class="view" id="view-records" data-title="记录，不评判">
@@ -224,7 +225,6 @@
           <button class="filter-chip is-active" data-filter="all">全部</button>
           <button class="filter-chip" data-filter="meal">饮食</button>
           <button class="filter-chip" data-filter="activity">运动</button>
-          <button class="filter-chip" data-filter="video">视频跟练</button>
           <button class="filter-chip" data-filter="steps">步数</button>
           <button class="filter-chip" data-filter="water">饮水</button>
           <button class="filter-chip" data-filter="weight">体重</button>
@@ -232,33 +232,114 @@
         <div class="timeline" id="timeline"></div>
       </section>
 
-      <section class="view" id="view-companion" data-title="轻松熊陪你慢慢来">
-        <article class="panel companion-panel" id="companion-system">
-          <div class="panel-heading">
-            <div><p class="eyebrow">Timer / Companion System</p><h3>选择一段轻松熊陪伴时光</h3></div>
-            <span class="coming-soon-chip">第三阶段继续</span>
+      <section class="view" id="view-family" data-title="家庭健康空间">
+        <article class="panel family-mode-banner">
+          <div class="family-banner-copy"><p class="eyebrow">当前家庭</p><h2 id="family-name">创建或加入家庭</h2><p>一家人轻轻地互相照顾，可平等共享饮食和运动动态。当前阶段仅保存在本机，不会上传服务器。</p><div class="family-header-member-list" id="family-header-members" hidden></div></div>
+          <div class="family-banner-bears" aria-hidden="true"><img src="assets/rilakkuma-from-setting.png" alt=""><img src="assets/korilakkuma-from-setting.png" alt=""></div>
+        </article>
+
+        <div class="family-setup-grid" id="family-setup">
+          <form class="panel family-setup-card" id="create-family-form">
+            <p class="eyebrow">创建家庭</p><h3>新建家庭健康空间</h3>
+            <label>家庭名称<input type="text" name="familyName" maxlength="24" placeholder="例如：草莓健康之家" required></label>
+            <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：妈妈、小明" required></label>
+            <button class="primary-button" type="submit">创建家庭</button>
+          </form>
+          <form class="panel family-setup-card" id="join-family-form">
+            <p class="eyebrow">加入家庭</p><h3>输入家庭邀请码</h3>
+            <label>家庭邀请码<input type="text" name="inviteCode" maxlength="12" placeholder="例如：BERRY8" required></label>
+            <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：爸爸、爷爷" required></label>
+            <button class="primary-button" type="submit">加入家庭</button>
+          </form>
+        </div>
+
+        <section class="family-workspace" id="family-workspace" hidden>
+          <article class="panel family-status-card"><div class="panel-heading"><div><p class="eyebrow">家庭成员</p><h3>今日健康状态</h3></div><span id="family-member-count">0 人</span></div><div class="family-member-list" id="family-member-list"></div></article>
+          <article class="panel family-feed-card family-feed-card-priority"><div class="panel-heading"><div><p class="eyebrow">家庭健康动态</p><h3>家人最近更新了什么</h3></div><span class="family-update-count" id="family-update-count" hidden>0 条新动态</span></div><div class="family-feed" id="family-feed"></div></article>
+          <article class="panel family-share-card"><div class="panel-heading"><div><p class="eyebrow">上传我的数据</p><h3>分享到家庭空间</h3></div></div><button class="primary-button" type="button" data-share-personal-health>同步今天的饮食与运动</button><p>共享内容仅包含你主动同步的饮食和运动记录。</p></article>
+        </section>
+
+        <section class="family-demo" id="family-demo">
+          <div class="section-heading"><div><p class="eyebrow">模拟数据展示</p><h2>家庭空间预览</h2><p>创建或加入家庭前，可先查看本地模拟效果。</p></div></div>
+          <div class="family-content-grid"><article class="panel"><div class="panel-heading"><div><h3>示例家庭成员</h3></div></div><div class="family-member-list" id="family-demo-members"></div></article><article class="panel"><div class="panel-heading"><div><h3>示例健康动态</h3></div></div><div class="family-feed" id="family-demo-feed"></div></article></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-nutrition" data-title="今天也要好好吃饭">
+        <section class="recipe-section" aria-labelledby="recipe-section-title">
+          <div class="section-heading"><div><p class="eyebrow">智能食谱推荐</p><h2 id="recipe-section-title">适合你今天的食谱</h2><p id="recipe-recommendation-copy">根据剩余热量与健康目标自动匹配。</p></div></div>
+          <p class="recipe-guideline-note">参考健康餐盘原则：多样蔬果、全谷物与优质蛋白，热量和营养值均为估算。</p>
+          <div class="recipe-grid" id="recipe-grid"></div>
+        </section>
+        <div class="nutrition-page-grid">
+          <article class="panel nutrition-goal-summary-card" id="nutrition-goal-summary" hidden>
+            <div><p class="eyebrow">当前饮食目标</p><h3 id="nutrition-goal-summary-label">保持体重</h3><p>每日 <b id="nutrition-goal-summary-calories">1850</b> kcal</p></div>
+            <button class="secondary-button" type="button" data-edit-nutrition-goal>修改饮食目标</button>
+          </article>
+          <form class="panel nutrition-goal-card" id="nutrition-goal-form">
+            <div class="panel-heading"><div><p class="eyebrow">饮食目标</p><h3>设置每日热量目标</h3></div><img src="assets/rilakkuma-from-setting.png" alt="" aria-hidden="true"></div>
+            <label>健康目标<select name="healthGoal" id="health-goal"><option value="fat_loss">减脂</option><option value="muscle_gain">增肌</option><option value="maintain">保持体重</option></select></label>
+            <label>每日目标热量（kcal）<input type="number" name="energyTarget" id="nutrition-goal-calories" min="800" max="5000" step="10" required></label>
+            <div class="calorie-adjust-row"><button type="button" data-calorie-adjust="-100">－100</button><button type="button" data-calorie-adjust="-50">－50</button><button type="button" data-calorie-adjust="50">＋50</button><button type="button" data-calorie-adjust="100">＋100</button></div>
+            <p class="goal-recommendation" id="goal-recommendation"></p>
+            <div class="nutrition-goal-actions"><button class="secondary-button" type="button" data-hide-nutrition-goal>取消</button><button class="primary-button" type="submit">保存饮食目标</button></div>
+          </form>
+          <article class="panel nutrition-page-summary">
+            <p class="eyebrow">今日进度</p><h3><b id="nutrition-page-consumed">0</b> / <b id="nutrition-page-target">1850</b> kcal</h3>
+            <div class="nutrition-page-bar"><i id="nutrition-page-bar"></i></div>
+            <strong id="nutrition-page-remaining">还可摄入 1850 kcal</strong>
+            <div class="nutrition-page-macros"><span>蛋白质 <b id="nutrition-page-protein">0</b>g</span><span>碳水 <b id="nutrition-page-carbs">0</b>g</span><span>脂肪 <b id="nutrition-page-fat">0</b>g</span></div>
+            <button class="primary-button" type="button" data-log="meal">＋ 添加饮食</button>
+          </article>
+        </div>
+        <article class="panel ai-food-card" aria-labelledby="ai-food-title">
+          <div class="ai-food-intro"><div><p class="eyebrow">模拟 AI 饮食识别</p><h3 id="ai-food-title">拍下这一餐，快速生成记录</h3><p>上传食物图片后会生成模拟识别结果，确认前请自行核对。</p></div><label class="primary-button ai-photo-button">📷 拍照记录<input type="file" id="ai-food-image" accept="image/*" capture="environment"></label></div>
+          <div class="ai-food-result" id="ai-food-result" hidden>
+            <div class="ai-food-preview"><img id="ai-food-preview-image" alt="待识别的餐食图片"></div>
+            <div class="ai-food-result-copy"><span class="soft-label">模拟识别完成</span><h4>检测到：<strong id="ai-food-detected">—</strong></h4><p>预计热量：<b id="ai-food-calories">0</b> kcal</p><div class="ai-food-macros"><span>蛋白质 <b id="ai-food-protein">0</b>g</span><span>碳水 <b id="ai-food-carbs">0</b>g</span><span>脂肪 <b id="ai-food-fat">0</b>g</span></div><button class="primary-button" type="button" data-confirm-ai-food>确认加入今日饮食</button></div>
           </div>
-          <p class="companion-intro">先选择想要的陪伴类型；独立计时页面将在第三阶段接入。</p>
-          <div class="companion-options" id="companion-options"></div>
-          <div class="companion-preview" id="companion-preview" aria-live="polite"></div>
         </article>
       </section>
 
       <section class="view" id="view-profile" data-title="我的节奏，我来定义">
         <div class="profile-layout">
           <article class="panel profile-card">
-            <div class="profile-avatar"><img id="profile-avatar-image" alt="用户头像"></div>
+            <div class="profile-avatar"><img id="profile-avatar-image" alt="用户头像"><span class="blank-avatar-icon" id="profile-avatar-fallback" aria-hidden="true"></span></div>
             <h2 id="profile-display-name">—</h2>
             <p id="profile-display-signature">—</p>
-            <div class="profile-facts"><span><b id="profile-current-weight">—</b> kg 当前</span><span><b id="profile-goal-weight">—</b> kg 目标</span><span><b id="profile-height">—</b> cm</span></div>
-            <div class="local-badge"><span class="status-dot"></span>本地模式</div>
+            <div class="profile-facts">
+              <span><b id="profile-current-weight">—</b> kg 当前</span><span><b id="profile-goal-weight">—</b> kg 目标</span><span><b id="profile-height">—</b> cm</span><span>BMI <b id="profile-bmi-value">—</b> <i id="profile-bmi-status"></i></span>
+              <details class="profile-checkin-compact">
+                <summary>🧸 打卡 <b id="check-in-continuous">0</b> 天</summary>
+                <div class="profile-checkin-popover"><p id="check-in-companion-copy">还没有打卡记录</p><div class="profile-checkin-details"><span>累计 <b id="check-in-total">0</b> 天</span><span>首次 <b id="check-in-first-date">—</b></span></div><div class="check-in-history-list" id="check-in-history-list"><p>完成第一次打卡后，记录会出现在这里。</p></div></div>
+              </details>
+            </div>
+            <div class="profile-card-actions"><div class="local-badge"><span class="status-dot"></span>本地模式</div><button class="secondary-button" type="button" data-open-settings>设置与编辑资料</button></div>
           </article>
+          <section class="today-trend-section profile-seven-day-trend" aria-labelledby="today-weight-trend-title">
+            <div class="insight-hero">
+              <div class="trend-copy">
+                <div class="trend-completion"><span>轻计划完成度</span><strong id="insight-completion">—</strong></div>
+                <p class="eyebrow">最近 7 天</p><h2 id="today-weight-trend-title">体重趋势</h2><p>日常波动很正常，观察更长时间的方向。</p>
+              </div>
+              <div class="trend-stat"><span>7 天内变化</span><strong id="weight-change">—</strong></div>
+              <button class="trend-toggle" type="button" data-toggle-weight-chart aria-expanded="false" aria-controls="weight-chart-panel" aria-label="展开体重折线图"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+            </div>
+            <article class="panel chart-panel" id="weight-chart-panel" hidden><div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div></article>
+          </section>
+          <article class="panel profile-family-info-card" id="profile-family-info" hidden>
+            <div class="panel-heading"><div><p class="eyebrow">家庭信息</p><h3 id="profile-family-name">—</h3></div><button class="invite-copy-button" type="button" data-copy-family-code aria-label="复制家庭邀请码">邀请码：<b id="family-invite-code">—</b><span>复制</span></button></div>
+            <form id="family-nickname-form"><label>家庭名称<input type="text" name="familyName" maxlength="24" required></label><label>我的家庭昵称<input type="text" name="nickname" maxlength="16" required></label><button class="secondary-button" type="submit">保存家庭信息</button></form>
+          </article>
+          <dialog class="profile-settings-dialog" id="profile-settings-dialog">
           <form class="panel settings-card" id="settings-form">
+            <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
             <div class="panel-heading"><div><p class="eyebrow">个人资料 / 设置</p><h3>修改资料与日常目标</h3></div></div>
             <div class="form-grid">
-              <label class="avatar-field">头像<input type="file" name="avatar" accept="image/*"><small class="field-hint">不选新图片时保留原头像。</small></label>
+              <label class="avatar-field">头像（可选）<input type="file" name="avatar" accept="image/*"><small class="field-hint">不选新图片时保留原头像。</small></label>
+              <label class="remove-avatar-field"><input type="checkbox" name="removeAvatar">删除当前头像，恢复空白头像</label>
               <label>用户名称<input type="text" name="name" maxlength="20" required></label>
-              <label class="signature-field">个性签名<input type="text" name="signature" maxlength="60" required></label>
+              <label class="signature-field">个性签名（可选）<input type="text" name="signature" maxlength="60"></label>
               <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" required></label>
               <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" required></label>
               <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" required></label>
@@ -270,14 +351,27 @@
             <div class="safety-callout">目标仅用于自我记录，不构成医疗或营养建议。若你未满 18 岁、孕期/哺乳期、有进食障碍史或慢性疾病，请先咨询专业人士。</div>
             <button class="primary-button" type="submit">保存目标</button>
           </form>
+          </dialog>
+          <article class="panel profile-trend-card" aria-labelledby="profile-trend-title">
+            <div class="panel-heading"><div><p class="eyebrow">过去 30 天</p><h3 id="profile-trend-title">身体变化趋势</h3><p>仅展示你真实记录过的数据，不用默认数值补齐。</p></div><span class="cute-chip">慢慢变好</span></div>
+            <div class="profile-trend-stats">
+              <div class="profile-trend-stat"><span>体重变化</span><strong><b id="profile-trend-weight-start">—</b> → <b id="profile-trend-weight-end">—</b> kg</strong><small id="profile-trend-weight-change">暂无变化</small></div>
+              <div class="profile-trend-stat"><span>BMI 变化</span><strong><b id="profile-trend-bmi-start">—</b> → <b id="profile-trend-bmi-end">—</b></strong><small id="profile-trend-bmi-change">暂无变化</small></div>
+              <div class="profile-trend-stat"><span>连续健康记录</span><strong><b id="profile-trend-streak">0</b> 天</strong><small>近 30 天共记录 <b id="profile-trend-recorded-days">0</b> 天</small></div>
+            </div>
+            <div class="profile-trend-charts">
+              <section class="profile-trend-chart"><div><strong>体重曲线</strong><span>kg</span></div><div id="profile-weight-chart" class="profile-chart-canvas"></div></section>
+              <section class="profile-trend-chart"><div><strong>BMI 曲线</strong><span>指数</span></div><div id="profile-bmi-chart" class="profile-chart-canvas"></div></section>
+            </div>
+          </article>
         </div>
       </section>
     </main>
 
     <nav class="mobile-nav" aria-label="移动端主导航">
-      <button class="is-active" data-view="today"><span>◉</span>今日</button>
-      <button data-view="records"><span>≋</span>记录</button>
-      <button data-view="companion"><span>♡</span>陪伴</button>
+      <button class="is-active" data-view="today"><span>◉</span>首页</button>
+      <button data-view="nutrition"><span>食</span>饮食</button>
+      <button data-view="exercise"><span>动</span>运动</button>
       <button data-view="profile"><span>◎</span>我的</button>
     </nav>
   </div>
@@ -312,11 +406,11 @@
       <div class="onboarding-bears" aria-hidden="true"><img src="assets/rilakkuma-from-setting.png" alt=""><img src="assets/korilakkuma-from-setting.png" alt=""></div>
       <p class="eyebrow">第一次见面</p>
       <h2>先认识一下你吧 🍓</h2>
-      <p class="onboarding-copy">资料只保存在当前设备。全部填写后，轻衡才会进入主页。</p>
+      <p class="onboarding-copy">资料只保存在当前设备。名称、身高和体重填写完成后即可进入主页。</p>
       <div class="onboarding-grid">
-        <label class="avatar-field">头像<input type="file" name="avatar" accept="image/*" required></label>
+        <label class="avatar-field">头像（可选）<input type="file" name="avatar" accept="image/*"><small class="field-hint">未上传时使用简洁空白头像。</small></label>
         <label>用户名称<input type="text" name="name" maxlength="20" autocomplete="nickname" required></label>
-        <label class="signature-field">个性签名<input type="text" name="signature" maxlength="60" required></label>
+        <label class="signature-field">个性签名（可选）<input type="text" name="signature" maxlength="60"></label>
         <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" inputmode="decimal" required></label>
         <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" inputmode="decimal" required></label>
         <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" inputmode="numeric" required></label>
@@ -325,8 +419,31 @@
     </form>
   </dialog>
 
+  <dialog id="check-in-dialog" class="check-in-dialog">
+    <div class="check-in-dialog-content">
+      <div class="check-in-dialog-bears" aria-hidden="true"><img src="assets/rilakkuma-from-setting.png" alt=""><img src="assets/korilakkuma-from-setting.png" alt=""></div>
+      <p class="eyebrow">今天的轻轻约定</p>
+      <h2>今天也要努力完成目标哦 🍓</h2>
+      <p>不必一下子做得完美，愿意开始就已经很棒啦。</p>
+      <button class="primary-button" type="button" data-check-in>立即打卡</button>
+    </div>
+  </dialog>
+
+  <dialog id="recipe-dialog" class="recipe-dialog">
+    <div class="recipe-detail" id="recipe-detail"></div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="companion.js"></script>
+  <script src="user-profile-manager.js"></script>
+  <script src="bmi-manager.js"></script>
+  <script src="check-in-system.js"></script>
+  <script src="nutrition-manager.js"></script>
+  <script src="recipe-recommendation-system.js"></script>
+  <script src="family-health-system.js"></script>
+  <script src="health-score-manager.js"></script>
+  <script src="ai-food-recognition.js"></script>
+  <script src="health-trend-manager.js"></script>
+  <script src="exercise-recommendation-system.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

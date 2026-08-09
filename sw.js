@@ -1,10 +1,19 @@
-const CACHE_NAME = "qingheng-pwa-v3";
+const CACHE_NAME = "qingheng-pwa-v18";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
-  "./companion.js",
+  "./user-profile-manager.js",
+  "./bmi-manager.js",
+  "./check-in-system.js",
+  "./nutrition-manager.js",
+  "./recipe-recommendation-system.js",
+  "./family-health-system.js",
+  "./health-score-manager.js",
+  "./ai-food-recognition.js",
+  "./health-trend-manager.js",
+  "./exercise-recommendation-system.js",
   "./manifest.webmanifest",
   "./assets/apple-touch-icon.png",
   "./assets/icon-192.png",
