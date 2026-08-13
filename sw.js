@@ -1,4 +1,4 @@
-const CACHE_NAME = "qingheng-pwa-v18";
+const CACHE_NAME = "qingheng-pwa-v27";
 const APP_SHELL = [
   "./",
   "./index.html",

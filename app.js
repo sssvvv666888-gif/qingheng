@@ -1,4 +1,8 @@
 const STORAGE_KEY = "qingheng-mvp-v1";
+const APP_VERSION = "1.0.0";
+const APP_UPDATED_AT = "2026.08.10";
+const BACKUP_FORMAT = "qingheng-health-backup";
+const UPDATE_FEEDBACK_KEY = "qingheng-update-feedback";
 
 const defaults = {
   profile: null,
@@ -41,7 +45,12 @@ const logConfig = {
 };
 
 let pendingAiFood = null;
+let pendingCaptureImage = "";
 let nutritionGoalEditing = false;
+let recipeAutoplayTimer = 0;
+let recipeAutoplayResumeTimer = 0;
+let recipeAutoplayPaused = false;
+let recipeDisplayMode = "random";
 
 function daysAgo(days, hour = 8) {
   const date = new Date();
@@ -60,6 +69,7 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!saved?.settings || !Array.isArray(saved.logs) || !Array.isArray(saved.tasks)) return structuredClone(defaults);
+    const family = window.FamilyHealthSystem.normalizeFamily(saved.familySystem?.family);
     return {
       ...structuredClone(defaults),
       ...saved,
@@ -69,8 +79,8 @@ function loadState() {
       logs: saved.logs,
       checkIns: window.CheckInSystem.normalize(saved.checkIns),
       familySystem: {
-        mode: saved.familySystem?.mode === "family" ? "family" : "personal",
-        family: window.FamilyHealthSystem.normalizeFamily(saved.familySystem?.family),
+        mode: family && saved.familySystem?.mode === "family" ? "family" : "personal",
+        family,
         currentMemberId: String(saved.familySystem?.currentMemberId || ""),
         knownFeedKeys: Array.isArray(saved.familySystem?.knownFeedKeys) ? saved.familySystem.knownFeedKeys : []
       }
@@ -541,18 +551,74 @@ function adjustNutritionCalories(amount) {
 function renderRecipeRecommendations(summary = window.NutritionManager.summary(state.logs, state.settings)) {
   const grid = document.querySelector("#recipe-grid");
   if (!grid) return;
-  const recipes = window.RecipeRecommendationSystem.recommend(summary.remaining, summary.healthGoal);
-  setText(
-    "recipe-recommendation-copy",
-    summary.remaining <= 300
-      ? "今日热量接近目标，可以选择低热量食物。"
-      : `根据剩余 ${Math.max(0, Math.round(summary.remaining))} kcal 和“${summary.healthGoalLabel}”目标推荐。`
-  );
+  const searchQuery = document.querySelector("#recipe-search-input")?.value.trim() || "";
+  let recipes;
+  if (recipeDisplayMode === "search" && searchQuery) {
+    recipes = window.RecipeRecommendationSystem.search(searchQuery, summary.remaining, summary.healthGoal);
+  } else {
+    recipeDisplayMode = "random";
+    recipes = window.RecipeRecommendationSystem.recommend(summary.remaining, summary.healthGoal, 5);
+  }
+  if (!recipes.length) {
+    grid.innerHTML = '<div class="recipe-empty">没有找到合适的食谱，请减少食材条件或换个关键词。</div>';
+    return;
+  }
   grid.innerHTML = recipes.map(recipe => `
     <button class="recipe-card" type="button" data-recipe-id="${recipe.id}">
       <span class="recipe-image" aria-hidden="true">${recipe.emoji}</span>
       <span class="recipe-card-copy"><strong>${escapeHtml(recipe.name)}</strong><small>${recipe.calories} kcal</small><span>蛋白质 ${recipe.protein}g · 碳水 ${recipe.carbs}g · 脂肪 ${recipe.fat}g</span><em>${escapeHtml(recipe.principle)}</em></span>
     </button>`).join("");
+  grid.scrollTo({ left: 0, behavior: "auto" });
+}
+
+function submitRecipeSearch(event) {
+  event.preventDefault();
+  const query = String(new FormData(event.currentTarget).get("query") || "").trim();
+  recipeDisplayMode = query ? "search" : "random";
+  renderNutrition();
+}
+
+function refreshRecipeRecommendations() {
+  recipeDisplayMode = "random";
+  const searchInput = document.querySelector("#recipe-search-input");
+  if (searchInput) searchInput.value = "";
+  renderNutrition();
+  showToast("已随机换一批食谱");
+}
+
+function advanceRecipeCarousel() {
+  const grid = document.querySelector("#recipe-grid");
+  if (!grid || recipeAutoplayPaused || document.hidden || !grid.closest(".view")?.classList.contains("is-active")) return;
+  const maxScroll = grid.scrollWidth - grid.clientWidth;
+  const firstCard = grid.querySelector(".recipe-card");
+  if (!firstCard || maxScroll < 4) return;
+  const gap = Number.parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const step = firstCard.getBoundingClientRect().width + gap;
+  const next = grid.scrollLeft >= maxScroll - 4 ? 0 : Math.min(grid.scrollLeft + step, maxScroll);
+  grid.scrollTo({ left: next, behavior: "smooth" });
+}
+
+function initializeRecipeCarousel() {
+  const grid = document.querySelector("#recipe-grid");
+  if (!grid || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+  const pause = () => {
+    window.clearTimeout(recipeAutoplayResumeTimer);
+    recipeAutoplayPaused = true;
+  };
+  const resume = () => {
+    window.clearTimeout(recipeAutoplayResumeTimer);
+    recipeAutoplayResumeTimer = window.setTimeout(() => { recipeAutoplayPaused = false; }, 1800);
+  };
+  grid.dataset.autoplay = "true";
+  grid.addEventListener("pointerenter", pause);
+  grid.addEventListener("pointerleave", resume);
+  grid.addEventListener("pointerdown", pause);
+  grid.addEventListener("pointerup", resume);
+  grid.addEventListener("pointercancel", resume);
+  grid.addEventListener("focusin", pause);
+  grid.addEventListener("focusout", resume);
+  window.clearInterval(recipeAutoplayTimer);
+  recipeAutoplayTimer = window.setInterval(advanceRecipeCarousel, 3200);
 }
 
 function openRecipeDetail(id) {
@@ -924,6 +990,80 @@ function resizeMealImage(file) {
   });
 }
 
+function openCaptureSource() {
+  pendingCaptureImage = "";
+  for (const id of ["capture-camera-input", "capture-album-input"]) {
+    const input = document.getElementById(id);
+    if (input) input.value = "";
+  }
+  const dialog = document.querySelector("#capture-source-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function renderCaptureKind(kind = "meal") {
+  const form = document.querySelector("#capture-detail-form");
+  if (!form) return;
+  const normalized = kind === "activity" ? "activity" : "meal";
+  form.elements.type.value = normalized;
+  document.querySelectorAll("[data-capture-kind]").forEach(button => button.classList.toggle("is-active", button.dataset.captureKind === normalized));
+  document.querySelector("#capture-detail-fields").innerHTML = normalized === "meal"
+    ? `<label>餐次<select name="mealType" required>${["早餐", "午餐", "晚餐", "加餐"].map(option => `<option ${option === suggestedMealType() ? "selected" : ""}>${option}</option>`).join("")}</select></label><label>预计热量（kcal）<input type="number" name="calories" min="0" max="5000" step="1" placeholder="例如 520" required></label>`
+    : '<label>运动时间（分钟）<input type="number" name="duration" min="1" max="600" step="1" placeholder="例如 30" required></label><label>消耗热量（kcal）<input type="number" name="calories" min="0" max="5000" step="1" placeholder="例如 120" required></label>';
+}
+
+function renderCapturePreview() {
+  const preview = document.querySelector("#capture-preview");
+  const image = document.querySelector("#capture-preview-image");
+  if (!preview || !image) return;
+  preview.hidden = !pendingCaptureImage;
+  if (pendingCaptureImage) image.src = pendingCaptureImage;
+  else image.removeAttribute("src");
+}
+
+function openCaptureDetails() {
+  document.querySelector("#capture-source-dialog")?.close();
+  const form = document.querySelector("#capture-detail-form");
+  form.reset();
+  renderCaptureKind("meal");
+  renderCapturePreview();
+  const dialog = document.querySelector("#capture-detail-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+async function handleCaptureFile(file) {
+  if (!file?.size) return;
+  try {
+    pendingCaptureImage = await resizeMealImage(file);
+    openCaptureDetails();
+  } catch {
+    pendingCaptureImage = "";
+    showToast("图片读取失败，请换一张再试");
+  }
+}
+
+function submitCaptureDetails(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const type = data.get("type") === "activity" ? "activity" : "meal";
+  const description = String(data.get("description") || "").trim();
+  const calories = Math.max(0, Number(data.get("calories")) || 0);
+  const now = new Date();
+  if (type === "meal") {
+    state.logs.push({ id: Date.now(), type, value: calories, mealType: String(data.get("mealType") || suggestedMealType()), foodName: description, weight: 0, protein: 0, carbs: 0, fat: 0, image: pendingCaptureImage, date: window.NutritionManager.dateKey(now), note: "相机快速记录", at: now.toISOString() });
+  } else {
+    const duration = Math.max(1, Number(data.get("duration")) || 1);
+    state.logs.push({ id: Date.now(), type, value: duration, duration, calories, image: pendingCaptureImage, note: description, at: now.toISOString() });
+    if (state.familySystem.family && state.familySystem.currentMemberId) state.familySystem.family = window.FamilyHealthSystem.sharePersonalLogs(state.familySystem.family, state.familySystem.currentMemberId, state.logs);
+  }
+  pendingCaptureImage = "";
+  saveState("快速记录已保存");
+  document.querySelector("#capture-detail-dialog")?.close();
+  renderDashboard();
+  renderTimeline();
+  renderInsights();
+  showToast(type === "meal" ? "饮食与照片已保存" : state.familySystem.family ? "运动记录已保存并同步到家庭" : "运动记录已保存");
+}
+
 async function recognizeAiFood(file) {
   if (!file?.size) return;
   try {
@@ -1033,6 +1173,7 @@ function deleteMealRecord(id) {
 
 function fillSettings() {
   const form = document.querySelector("#settings-form");
+  if (!form) return;
   if (state.profile) {
     for (const key of ["name", "signature", "currentWeight", "goalWeight", "height"]) {
       if (form.elements[key]) form.elements[key].value = state.profile[key] ?? "";
@@ -1041,7 +1182,38 @@ function fillSettings() {
   Object.entries(state.settings).forEach(([key, value]) => {
     if (form.elements[key] && value !== null && !["currentWeight", "goalWeight", "height"].includes(key)) form.elements[key].value = value;
   });
+  if (form.elements.avatar) form.elements.avatar.value = "";
   if (form.elements.removeAvatar) form.elements.removeAvatar.checked = false;
+  renderAvatar("settings-avatar-preview-image", "settings-avatar-preview-fallback", state.profile?.avatar || "");
+  renderSettingsBMI();
+  renderProfileFamilyInfo(state.familySystem?.family || null);
+}
+
+function renderSettingsBMI() {
+  const form = document.querySelector("#settings-form");
+  if (!form) return;
+  const bmi = window.BMIManager.getResult(form.elements.currentWeight?.value, form.elements.height?.value);
+  setText("settings-bmi-value", bmi.value ?? "—");
+  setText("settings-bmi-status", bmi.label);
+}
+
+function runtimeLabel() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone === true;
+  if (isIOS && standalone) return "iOS Web App";
+  if (isIOS) return "iOS Safari";
+  return standalone ? "Web App" : "Web 浏览器";
+}
+
+function openSettingsDrawer() {
+  fillSettings();
+  const dialog = document.querySelector("#profile-settings-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function initializeSettingsDrawer() {
+  const dialog = document.querySelector("#profile-settings-dialog");
+  if (dialog && dialog.parentElement !== document.body) document.body.append(dialog);
 }
 
 function resizeAvatarImage(file) {
@@ -1145,6 +1317,8 @@ async function submitSettings(event) {
     waterTarget: Number(data.get("waterTarget")),
     stepsTarget: Number(data.get("stepsTarget"))
   };
+  const currentMember = state.familySystem?.family?.members?.find(member => member.memberId === state.familySystem.currentMemberId);
+  if (currentMember) currentMember.avatar = state.profile.avatar;
   if (Number.isFinite(previousWeight) && previousWeight !== currentWeight) {
     state.logs.push({ id: Date.now(), type: "weight", value: currentWeight, note: "资料更新", at: new Date().toISOString() });
   }
@@ -1152,6 +1326,7 @@ async function submitSettings(event) {
   renderDashboard();
   renderTimeline();
   renderInsights();
+  renderFamily();
   fillSettings();
   const settingsDialog = document.querySelector("#profile-settings-dialog");
   if (settingsDialog?.open) settingsDialog.close();
@@ -1159,7 +1334,11 @@ async function submitSettings(event) {
 }
 
 function renderHealthModeSwitch() {
-  const mode = state.familySystem?.mode === "family" ? "family" : "personal";
+  const hasFamily = Boolean(state.familySystem?.family);
+  if (!hasFamily) state.familySystem.mode = "personal";
+  const mode = hasFamily && state.familySystem?.mode === "family" ? "family" : "personal";
+  const toolbar = document.querySelector(".home-mode-toolbar");
+  if (toolbar) toolbar.hidden = !hasFamily;
   document.querySelectorAll("[data-health-mode]").forEach(button => {
     button.classList.toggle("is-active", button.dataset.healthMode === mode);
     button.setAttribute("aria-pressed", String(button.dataset.healthMode === mode));
@@ -1167,6 +1346,10 @@ function renderHealthModeSwitch() {
 }
 
 function setHealthMode(mode) {
+  if (mode === "family" && !state.familySystem?.family) {
+    showToast("请先在设置中心创建或加入家庭");
+    return;
+  }
   state.familySystem.mode = mode === "family" ? "family" : "personal";
   saveState(state.familySystem.mode === "family" ? "首页已切换到家庭" : "首页已切换到个人");
   renderHealthModeSwitch();
@@ -1197,7 +1380,7 @@ function renderHomeMode() {
   const personal = document.querySelector("#home-personal-dashboard");
   const familyDashboard = document.querySelector("#home-family-dashboard");
   if (!personal || !familyDashboard) return;
-  const familyMode = state.familySystem.mode === "family";
+  const familyMode = Boolean(state.familySystem?.family) && state.familySystem.mode === "family";
   personal.hidden = familyMode;
   familyDashboard.hidden = !familyMode;
   setText("home-mode-label", familyMode ? "家庭健康" : "个人健康");
@@ -1292,7 +1475,7 @@ function renderFamilyFeed(family, container) {
     return `
     <article class="family-feed-item">
       <header><div class="family-member-avatar">${familyAvatarMarkup(item)}</div><div><strong>${escapeHtml(item.nickname)}</strong><time>${escapeHtml(familyFeedTime(item.at))}</time></div><span>${escapeHtml(detail.label)}</span></header>
-      ${item.type === "food" && item.image ? `<img class="family-feed-image" src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name || "饮食记录")}">` : ""}
+      ${item.image ? `<img class="family-feed-image" src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name || detail.label)}">` : ""}
       <div class="family-feed-copy"><p>${escapeHtml(detail.title)}</p><b>${escapeHtml(detail.meta)}</b></div>
     </article>`;
   }).join("");
@@ -1305,15 +1488,15 @@ function renderFamily() {
   const workspace = document.querySelector("#family-workspace");
   const demo = document.querySelector("#family-demo");
   if (!family) {
+    state.familySystem.mode = "personal";
     setText("family-name", "创建或加入家庭");
     renderFamilyHeaderMembers(null);
     renderProfileFamilyInfo(null);
     setup.hidden = false;
     workspace.hidden = true;
-    demo.hidden = false;
-    const sample = window.FamilyHealthSystem.demoFamily(state.profile);
-    renderFamilyMembers(sample, document.querySelector("#family-demo-members"));
-    renderFamilyFeed(sample, document.querySelector("#family-demo-feed"));
+    demo.hidden = true;
+    renderHealthModeSwitch();
+    renderHomeMode();
     return;
   }
 
@@ -1328,6 +1511,7 @@ function renderFamily() {
   renderFamilyMembers(family, document.querySelector("#family-member-list"));
   renderFamilyFeed(family, document.querySelector("#family-feed"));
   updateFamilyNotifications(family);
+  renderHealthModeSwitch();
 }
 
 function submitCreateFamily(event) {
@@ -1338,6 +1522,8 @@ function submitCreateFamily(event) {
   saveState("家庭健康空间已创建");
   event.currentTarget.reset();
   renderFamily();
+  renderHomeMode();
+  document.querySelector("#profile-settings-dialog")?.close();
   showToast(`家庭已创建，邀请码 ${result.family.inviteCode}`);
 }
 
@@ -1349,6 +1535,8 @@ function submitJoinFamily(event) {
   saveState("已加入本机模拟家庭");
   event.currentTarget.reset();
   renderFamily();
+  renderHomeMode();
+  document.querySelector("#profile-settings-dialog")?.close();
   showToast("已加入本机模拟家庭空间");
 }
 
@@ -1426,6 +1614,72 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 }
 
+function backupFileName() {
+  const now = new Date();
+  const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+  return `轻衡健康备份-${date}.json`;
+}
+
+function exportAppData() {
+  const payload = {
+    format: BACKUP_FORMAT,
+    schemaVersion: 1,
+    appVersion: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: state
+  };
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = backupFileName();
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+  showToast("数据备份已导出");
+}
+
+function isImportableState(value) {
+  return Boolean(value && typeof value === "object" && value.settings && typeof value.settings === "object" && Array.isArray(value.tasks) && Array.isArray(value.logs));
+}
+
+async function importAppData(file) {
+  if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    const imported = parsed?.format === BACKUP_FORMAT ? parsed.data : parsed;
+    if (!isImportableState(imported)) throw new Error("invalid backup");
+    if (!window.confirm("导入会覆盖当前手机里的轻衡数据，确定继续吗？")) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+    showToast("导入成功，正在重新载入");
+    setTimeout(() => location.reload(), 600);
+  } catch {
+    showToast("导入失败，请选择轻衡导出的备份文件");
+  } finally {
+    const input = document.querySelector("#data-import-file");
+    if (input) input.value = "";
+  }
+}
+
+async function checkForAppUpdate(button) {
+  if (!("serviceWorker" in navigator) || location.protocol === "file:") {
+    showToast("当前预览环境不支持自动检查更新");
+    return;
+  }
+  if (button) button.disabled = true;
+  showToast("正在检查更新…");
+  try {
+    const registration = await navigator.serviceWorker.getRegistration() || await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+    await registration.update();
+    sessionStorage.setItem(UPDATE_FEEDBACK_KEY, `已完成更新检查 · 当前版本 ${APP_VERSION}`);
+    setTimeout(() => location.reload(), 500);
+  } catch {
+    if (button) button.disabled = false;
+    showToast("检查失败，请确认网络后重试");
+  }
+}
+
 let toastTimer;
 function showToast(message) {
   const toast = document.querySelector("#toast");
@@ -1439,6 +1693,10 @@ document.addEventListener("click", event => {
   const viewButton = event.target.closest("[data-view]");
   const viewLink = event.target.closest("[data-view-link]");
   const logButton = event.target.closest("[data-log]");
+  const cameraButton = event.target.closest("[data-open-camera]");
+  const captureSourceButton = event.target.closest("[data-capture-source]");
+  const captureKindButton = event.target.closest("[data-capture-kind]");
+  const removeCaptureImageButton = event.target.closest("[data-remove-capture-image]");
   const profileButton = event.target.closest("[data-open-profile]");
   const settingsButton = event.target.closest("[data-open-settings]");
   const filterButton = event.target.closest("[data-filter]");
@@ -1455,6 +1713,7 @@ document.addEventListener("click", event => {
   const calorieAdjustButton = event.target.closest("[data-calorie-adjust]");
   const recipeButton = event.target.closest("[data-recipe-id]");
   const addRecipeButton = event.target.closest("[data-add-recipe]");
+  const refreshRecipesButton = event.target.closest("[data-refresh-recipes]");
   const healthModeButton = event.target.closest("[data-health-mode]");
   const sharePersonalButton = event.target.closest("[data-share-personal-health]");
   const confirmAiFoodButton = event.target.closest("[data-confirm-ai-food]");
@@ -1462,10 +1721,31 @@ document.addEventListener("click", event => {
   const hideNutritionGoalButton = event.target.closest("[data-hide-nutrition-goal]");
   const exerciseTypeButton = event.target.closest("[data-exercise-type]");
   const copyFamilyCodeButton = event.target.closest("[data-copy-family-code]");
+  const checkUpdateButton = event.target.closest("[data-check-update]");
+  const exportDataButton = event.target.closest("[data-export-data]");
+  const importDataButton = event.target.closest("[data-import-data]");
+  const backupDataButton = event.target.closest("[data-backup-data]");
+
+  if (event.target === document.querySelector("#profile-settings-dialog")) {
+    event.target.close();
+    return;
+  }
 
   if (viewButton) setView(viewButton.dataset.view);
   if (viewLink) setView(viewLink.dataset.viewLink);
   if (logButton) openLogDialog(logButton.dataset.log);
+  if (cameraButton) openCaptureSource();
+  if (captureSourceButton) {
+    const source = captureSourceButton.dataset.captureSource;
+    if (source === "blank") openCaptureDetails();
+    if (source === "camera") document.querySelector("#capture-camera-input")?.click();
+    if (source === "album") document.querySelector("#capture-album-input")?.click();
+  }
+  if (captureKindButton) renderCaptureKind(captureKindButton.dataset.captureKind);
+  if (removeCaptureImageButton) {
+    pendingCaptureImage = "";
+    renderCapturePreview();
+  }
   if (closeDialogButton) closeDialogButton.closest("dialog")?.close();
   if (addStepsButton) addSteps(Number(addStepsButton.dataset.stepsAdd));
   if (saveStepsButton) saveTodaySteps();
@@ -1479,6 +1759,7 @@ document.addEventListener("click", event => {
   if (calorieAdjustButton) adjustNutritionCalories(Number(calorieAdjustButton.dataset.calorieAdjust));
   if (recipeButton) openRecipeDetail(recipeButton.dataset.recipeId);
   if (addRecipeButton) addRecipeToToday(addRecipeButton.dataset.addRecipe);
+  if (refreshRecipesButton) refreshRecipeRecommendations();
   if (healthModeButton) setHealthMode(healthModeButton.dataset.healthMode);
   if (sharePersonalButton) sharePersonalHealth();
   if (confirmAiFoodButton) confirmAiFood();
@@ -1486,11 +1767,12 @@ document.addEventListener("click", event => {
   if (hideNutritionGoalButton) hideNutritionGoal();
   if (exerciseTypeButton) openExerciseType(exerciseTypeButton.dataset.exerciseType, exerciseTypeButton.dataset.exerciseMinutes, exerciseTypeButton.dataset.exerciseName);
   if (copyFamilyCodeButton) copyFamilyInviteCode();
+  if (checkUpdateButton) checkForAppUpdate(checkUpdateButton);
+  if (exportDataButton) exportAppData();
+  if (backupDataButton) exportAppData();
+  if (importDataButton) document.querySelector("#data-import-file")?.click();
   if (profileButton) setView("profile");
-  if (settingsButton) {
-    fillSettings();
-    document.querySelector("#profile-settings-dialog")?.showModal();
-  }
+  if (settingsButton) openSettingsDrawer();
   if (filterButton) {
     activeFilter = filterButton.dataset.filter;
     document.querySelectorAll("[data-filter]").forEach(button => button.classList.toggle("is-active", button === filterButton));
@@ -1499,6 +1781,14 @@ document.addEventListener("click", event => {
 });
 
 document.addEventListener("change", event => {
+  if (event.target.matches("#capture-camera-input, #capture-album-input")) {
+    handleCaptureFile(event.target.files?.[0]);
+    return;
+  }
+  if (event.target.matches("#data-import-file")) {
+    importAppData(event.target.files?.[0]);
+    return;
+  }
   if (event.target.matches("#ai-food-image")) {
     recognizeAiFood(event.target.files?.[0]);
     return;
@@ -1511,13 +1801,19 @@ document.addEventListener("change", event => {
   renderDashboard();
 });
 
+document.querySelector("#settings-form").addEventListener("input", event => {
+  if (event.target.matches('[name="currentWeight"], [name="height"]')) renderSettingsBMI();
+});
+
 document.querySelector("#log-form").addEventListener("submit", submitLog);
+document.querySelector("#capture-detail-form").addEventListener("submit", submitCaptureDetails);
 document.querySelector("#task-form").addEventListener("submit", submitTaskEditor);
 document.querySelector("#onboarding-form").addEventListener("submit", submitOnboarding);
 document.querySelector("#onboarding-dialog").addEventListener("cancel", event => event.preventDefault());
 document.querySelector("#check-in-dialog").addEventListener("cancel", event => event.preventDefault());
 document.querySelector("#settings-form").addEventListener("submit", submitSettings);
 document.querySelector("#nutrition-goal-form").addEventListener("submit", submitNutritionGoal);
+document.querySelector("#recipe-search-form").addEventListener("submit", submitRecipeSearch);
 document.querySelector("#create-family-form").addEventListener("submit", submitCreateFamily);
 document.querySelector("#join-family-form").addEventListener("submit", submitJoinFamily);
 document.querySelector("#family-nickname-form").addEventListener("submit", submitFamilyNickname);
@@ -1528,10 +1824,20 @@ document.querySelector("#health-goal").addEventListener("change", event => {
 });
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" });
 document.querySelector("#today-date").textContent = dateFormatter.format(new Date());
+setText("app-version", APP_VERSION);
+setText("app-updated-at", APP_UPDATED_AT);
+setText("app-runtime", runtimeLabel());
+const updateFeedback = sessionStorage.getItem(UPDATE_FEEDBACK_KEY);
+if (updateFeedback) {
+  sessionStorage.removeItem(UPDATE_FEEDBACK_KEY);
+  setTimeout(() => showToast(updateFeedback), 300);
+}
+initializeSettingsDrawer();
 initializeFamilyHome();
 initializeExercisePage();
 fillSettings();
 renderDashboard();
+initializeRecipeCarousel();
 renderTimeline();
 renderInsights();
 fillNutritionGoal();

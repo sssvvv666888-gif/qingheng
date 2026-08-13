@@ -139,7 +139,7 @@
         member.foodRecords.push({ id: makeId("food"), sourceId: log.id, at: log.at, mealType: log.mealType, name: log.foodName || log.note || "饮食记录", foods: log.foods || [log.foodName || log.note || "饮食记录"], calories: Number(log.value) || 0, protein: Number(log.protein) || 0, carbs: Number(log.carbs) || 0, fat: Number(log.fat) || 0, image: log.image || "" });
       }
       if (["activity", "video"].includes(log.type) && !member.exerciseRecords.some(record => String(record.sourceId) === String(log.id))) {
-        member.exerciseRecords.push({ id: makeId("exercise"), sourceId: log.id, at: log.at, name: log.type === "video" ? `${log.platform || "视频"}跟练` : (log.note || "运动"), duration: Number(log.duration || log.value) || 0, calories: Number(log.calories || 0) || 0 });
+        member.exerciseRecords.push({ id: makeId("exercise"), sourceId: log.id, at: log.at, name: log.type === "video" ? `${log.platform || "视频"}跟练` : (log.note || "运动"), duration: Number(log.duration || log.value) || 0, calories: Number(log.calories || 0) || 0, image: log.image || "" });
       }
     }
     return updateHealthScores(family);

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#f8c4cb">
   <meta name="description" content="轻衡——温和、可持续的减脂生活记录工具。">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,11 +40,11 @@
           <p class="eyebrow" id="today-date"></p>
           <h1 id="view-title">早上好，慢慢来</h1>
         </div>
-        <div class="topbar-actions"><button class="avatar" data-open-profile aria-label="打开我的页面"><img id="topbar-avatar" alt=""><span class="blank-avatar-icon" id="topbar-avatar-fallback" aria-hidden="true"></span></button></div>
+        <div class="topbar-actions"><button class="avatar camera-trigger" type="button" data-open-camera aria-label="打开相机记录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h3l1.4-2h7.2l1.4 2h3a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z"></path><circle cx="12" cy="13.5" r="4"></circle></svg></button><button class="avatar settings-trigger" type="button" data-open-settings aria-label="打开设置中心"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.1 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.1 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8.5 4.1a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2.3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.1a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8.5c.16.38.37.72.67 1 .3.26.69.4 1.09.4h.09a2 2 0 1 1 0 4h-.09c-.4 0-.79.14-1.09.4-.3.28-.51.62-.67 1Z"></path></svg></button></div>
       </header>
 
       <section class="view is-active" id="view-today" data-title="今天也慢慢来">
-        <div class="home-mode-toolbar" aria-label="首页内容模式">
+        <div class="home-mode-toolbar" aria-label="首页内容模式" hidden>
           <div><span>首页模式</span><strong id="home-mode-label">个人健康</strong></div>
           <div class="health-mode-switch"><button class="is-active" type="button" data-health-mode="personal">个人</button><button type="button" data-health-mode="family">家庭</button></div>
         </div>
@@ -234,24 +234,9 @@
 
       <section class="view" id="view-family" data-title="家庭健康空间">
         <article class="panel family-mode-banner">
-          <div class="family-banner-copy"><p class="eyebrow">当前家庭</p><h2 id="family-name">创建或加入家庭</h2><p>一家人轻轻地互相照顾，可平等共享饮食和运动动态。当前阶段仅保存在本机，不会上传服务器。</p><div class="family-header-member-list" id="family-header-members" hidden></div></div>
+          <div class="family-banner-copy"><p class="eyebrow">当前家庭</p><h2 id="family-name">创建或加入家庭</h2><div class="family-header-member-list" id="family-header-members" hidden></div></div>
           <div class="family-banner-bears" aria-hidden="true"><img src="assets/rilakkuma-from-setting.png" alt=""><img src="assets/korilakkuma-from-setting.png" alt=""></div>
         </article>
-
-        <div class="family-setup-grid" id="family-setup">
-          <form class="panel family-setup-card" id="create-family-form">
-            <p class="eyebrow">创建家庭</p><h3>新建家庭健康空间</h3>
-            <label>家庭名称<input type="text" name="familyName" maxlength="24" placeholder="例如：草莓健康之家" required></label>
-            <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：妈妈、小明" required></label>
-            <button class="primary-button" type="submit">创建家庭</button>
-          </form>
-          <form class="panel family-setup-card" id="join-family-form">
-            <p class="eyebrow">加入家庭</p><h3>输入家庭邀请码</h3>
-            <label>家庭邀请码<input type="text" name="inviteCode" maxlength="12" placeholder="例如：BERRY8" required></label>
-            <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：爸爸、爷爷" required></label>
-            <button class="primary-button" type="submit">加入家庭</button>
-          </form>
-        </div>
 
         <section class="family-workspace" id="family-workspace" hidden>
           <article class="panel family-status-card"><div class="panel-heading"><div><p class="eyebrow">家庭成员</p><h3>今日健康状态</h3></div><span id="family-member-count">0 人</span></div><div class="family-member-list" id="family-member-list"></div></article>
@@ -259,16 +244,23 @@
           <article class="panel family-share-card"><div class="panel-heading"><div><p class="eyebrow">上传我的数据</p><h3>分享到家庭空间</h3></div></div><button class="primary-button" type="button" data-share-personal-health>同步今天的饮食与运动</button><p>共享内容仅包含你主动同步的饮食和运动记录。</p></article>
         </section>
 
-        <section class="family-demo" id="family-demo">
+        <section class="family-demo" id="family-demo" hidden>
           <div class="section-heading"><div><p class="eyebrow">模拟数据展示</p><h2>家庭空间预览</h2><p>创建或加入家庭前，可先查看本地模拟效果。</p></div></div>
           <div class="family-content-grid"><article class="panel"><div class="panel-heading"><div><h3>示例家庭成员</h3></div></div><div class="family-member-list" id="family-demo-members"></div></article><article class="panel"><div class="panel-heading"><div><h3>示例健康动态</h3></div></div><div class="family-feed" id="family-demo-feed"></div></article></div>
         </section>
       </section>
 
       <section class="view" id="view-nutrition" data-title="今天也要好好吃饭">
-        <section class="recipe-section" aria-labelledby="recipe-section-title">
-          <div class="section-heading"><div><p class="eyebrow">智能食谱推荐</p><h2 id="recipe-section-title">适合你今天的食谱</h2><p id="recipe-recommendation-copy">根据剩余热量与健康目标自动匹配。</p></div></div>
+        <section class="recipe-section recipe-section-compact" aria-labelledby="recipe-section-title">
+          <div class="section-heading"><div><p class="eyebrow">智能食谱推荐</p><h2 id="recipe-section-title">适合你今天的食谱</h2></div></div>
           <p class="recipe-guideline-note">参考健康餐盘原则：多样蔬果、全谷物与优质蛋白，热量和营养值均为估算。</p>
+          <div class="recipe-tools">
+            <form class="recipe-tool-form" id="recipe-search-form" role="search">
+              <label for="recipe-search-input">搜索食谱</label>
+              <div><input id="recipe-search-input" name="query" type="search" placeholder="搜索菜名，如番茄、虾仁"><button type="submit">搜索</button></div>
+            </form>
+            <button class="recipe-refresh-button" type="button" data-refresh-recipes>换一批</button>
+          </div>
           <div class="recipe-grid" id="recipe-grid"></div>
         </section>
         <div class="nutrition-page-grid">
@@ -292,13 +284,6 @@
             <button class="primary-button" type="button" data-log="meal">＋ 添加饮食</button>
           </article>
         </div>
-        <article class="panel ai-food-card" aria-labelledby="ai-food-title">
-          <div class="ai-food-intro"><div><p class="eyebrow">模拟 AI 饮食识别</p><h3 id="ai-food-title">拍下这一餐，快速生成记录</h3><p>上传食物图片后会生成模拟识别结果，确认前请自行核对。</p></div><label class="primary-button ai-photo-button">📷 拍照记录<input type="file" id="ai-food-image" accept="image/*" capture="environment"></label></div>
-          <div class="ai-food-result" id="ai-food-result" hidden>
-            <div class="ai-food-preview"><img id="ai-food-preview-image" alt="待识别的餐食图片"></div>
-            <div class="ai-food-result-copy"><span class="soft-label">模拟识别完成</span><h4>检测到：<strong id="ai-food-detected">—</strong></h4><p>预计热量：<b id="ai-food-calories">0</b> kcal</p><div class="ai-food-macros"><span>蛋白质 <b id="ai-food-protein">0</b>g</span><span>碳水 <b id="ai-food-carbs">0</b>g</span><span>脂肪 <b id="ai-food-fat">0</b>g</span></div><button class="primary-button" type="button" data-confirm-ai-food>确认加入今日饮食</button></div>
-          </div>
-        </article>
       </section>
 
       <section class="view" id="view-profile" data-title="我的节奏，我来定义">
@@ -314,7 +299,7 @@
                 <div class="profile-checkin-popover"><p id="check-in-companion-copy">还没有打卡记录</p><div class="profile-checkin-details"><span>累计 <b id="check-in-total">0</b> 天</span><span>首次 <b id="check-in-first-date">—</b></span></div><div class="check-in-history-list" id="check-in-history-list"><p>完成第一次打卡后，记录会出现在这里。</p></div></div>
               </details>
             </div>
-            <div class="profile-card-actions"><div class="local-badge"><span class="status-dot"></span>本地模式</div><button class="secondary-button" type="button" data-open-settings>设置与编辑资料</button></div>
+            <div class="profile-card-actions"><div class="local-badge"><span class="status-dot"></span>本地模式</div></div>
           </article>
           <section class="today-trend-section profile-seven-day-trend" aria-labelledby="today-weight-trend-title">
             <div class="insight-hero">
@@ -327,30 +312,78 @@
             </div>
             <article class="panel chart-panel" id="weight-chart-panel" hidden><div class="chart-wrap" id="weight-chart" aria-label="最近7天体重趋势图"></div></article>
           </section>
-          <article class="panel profile-family-info-card" id="profile-family-info" hidden>
-            <div class="panel-heading"><div><p class="eyebrow">家庭信息</p><h3 id="profile-family-name">—</h3></div><button class="invite-copy-button" type="button" data-copy-family-code aria-label="复制家庭邀请码">邀请码：<b id="family-invite-code">—</b><span>复制</span></button></div>
-            <form id="family-nickname-form"><label>家庭名称<input type="text" name="familyName" maxlength="24" required></label><label>我的家庭昵称<input type="text" name="nickname" maxlength="16" required></label><button class="secondary-button" type="submit">保存家庭信息</button></form>
-          </article>
           <dialog class="profile-settings-dialog" id="profile-settings-dialog">
-          <form class="panel settings-card" id="settings-form">
-            <button class="dialog-close" type="button" data-close-dialog aria-label="关闭">×</button>
-            <div class="panel-heading"><div><p class="eyebrow">个人资料 / 设置</p><h3>修改资料与日常目标</h3></div></div>
-            <div class="form-grid">
-              <label class="avatar-field">头像（可选）<input type="file" name="avatar" accept="image/*"><small class="field-hint">不选新图片时保留原头像。</small></label>
-              <label class="remove-avatar-field"><input type="checkbox" name="removeAvatar">删除当前头像，恢复空白头像</label>
-              <label>用户名称<input type="text" name="name" maxlength="20" required></label>
-              <label class="signature-field">个性签名（可选）<input type="text" name="signature" maxlength="60"></label>
-              <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" required></label>
-              <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" required></label>
-              <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" required></label>
-              <label>每日能量预算（kcal）<input type="number" name="energyTarget" min="1200" max="4000" step="10" required></label>
-              <label>每日活动目标（分钟）<input type="number" name="activityTarget" min="5" max="240" step="5" required></label>
-              <label>每日饮水目标（ml）<input type="number" name="waterTarget" min="500" max="5000" step="100" required></label>
-              <label>每日步数目标（步）<input type="number" name="stepsTarget" min="1000" max="50000" step="500" required></label>
-            </div>
-            <div class="safety-callout">目标仅用于自我记录，不构成医疗或营养建议。若你未满 18 岁、孕期/哺乳期、有进食障碍史或慢性疾病，请先咨询专业人士。</div>
-            <button class="primary-button" type="submit">保存目标</button>
-          </form>
+            <section class="settings-drawer" aria-labelledby="settings-drawer-title">
+              <header class="settings-drawer-header">
+                <div><p class="eyebrow">设置中心</p><h2 id="settings-drawer-title">管理你的轻衡</h2></div>
+                <button class="dialog-close" type="button" data-close-dialog aria-label="关闭设置中心">×</button>
+              </header>
+              <div class="settings-drawer-body">
+                <section class="settings-section settings-profile-section" aria-labelledby="settings-profile-title">
+                  <div class="settings-section-heading"><div><p class="eyebrow">个人资料</p><h3 id="settings-profile-title">资料与日常目标</h3></div></div>
+                  <form id="settings-form">
+                    <div class="settings-avatar-row">
+                      <div class="settings-avatar-preview"><img id="settings-avatar-preview-image" alt="当前头像"><span class="blank-avatar-icon" id="settings-avatar-preview-fallback" aria-hidden="true"></span></div>
+                      <label class="avatar-field">修改头像（可选）<input type="file" name="avatar" accept="image/*"><small class="field-hint">不选新图片时保留当前头像。</small></label>
+                    </div>
+                    <label class="remove-avatar-field"><input type="checkbox" name="removeAvatar">删除当前头像，恢复空白头像</label>
+                    <div class="form-grid">
+                      <label>用户名称<input type="text" name="name" maxlength="20" required></label>
+                      <label class="signature-field">个性签名（可选）<input type="text" name="signature" maxlength="60"></label>
+                      <label>当前体重（kg）<input type="number" name="currentWeight" min="30" max="300" step="0.1" required></label>
+                      <label>目标体重（kg）<input type="number" name="goalWeight" min="30" max="300" step="0.1" required></label>
+                      <label>身高（cm）<input type="number" name="height" min="100" max="250" step="1" required></label>
+                      <div class="settings-bmi-display"><span>BMI（自动计算）</span><strong><b id="settings-bmi-value">—</b> <i id="settings-bmi-status"></i></strong></div>
+                      <label>每日能量预算（kcal）<input type="number" name="energyTarget" min="1200" max="4000" step="10" required></label>
+                      <label>每日活动目标（分钟）<input type="number" name="activityTarget" min="5" max="240" step="5" required></label>
+                      <label>每日饮水目标（ml）<input type="number" name="waterTarget" min="500" max="5000" step="100" required></label>
+                      <label>每日步数目标（步）<input type="number" name="stepsTarget" min="1000" max="50000" step="500" required></label>
+                    </div>
+                    <div class="safety-callout">目标仅用于自我记录，不构成医疗或营养建议。若你未满 18 岁、孕期/哺乳期、有进食障碍史或慢性疾病，请先咨询专业人士。</div>
+                    <button class="primary-button settings-save-button" type="submit">保存资料与目标</button>
+                  </form>
+                </section>
+
+                <section class="settings-section settings-family-section" aria-labelledby="settings-family-title">
+                  <div class="settings-section-heading"><div><p class="eyebrow">可选增强功能</p><h3 id="settings-family-title">家庭健康管理</h3><p>默认保持个人模式。创建或加入家庭后，首页才会出现“个人｜家庭”切换。</p></div></div>
+                  <div class="family-setup-grid" id="family-setup">
+                    <form class="family-setup-card" id="create-family-form">
+                      <p class="eyebrow">创建家庭</p><h4>新建家庭健康空间</h4>
+                      <label>家庭名称<input type="text" name="familyName" maxlength="24" placeholder="例如：草莓健康之家" required></label>
+                      <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：妈妈、小明" required></label>
+                      <button class="primary-button" type="submit">创建家庭</button>
+                    </form>
+                    <form class="family-setup-card" id="join-family-form">
+                      <p class="eyebrow">加入家庭</p><h4>输入家庭邀请码</h4>
+                      <label>家庭邀请码<input type="text" name="inviteCode" maxlength="12" placeholder="例如：BERRY8" required></label>
+                      <label>我的家庭昵称<input type="text" name="nickname" maxlength="16" placeholder="例如：爸爸、爷爷" required></label>
+                      <button class="primary-button" type="submit">加入家庭</button>
+                    </form>
+                  </div>
+                  <article class="profile-family-info-card" id="profile-family-info" hidden>
+                    <div class="panel-heading"><div><p class="eyebrow">当前家庭</p><h3 id="profile-family-name">—</h3></div><button class="invite-copy-button" type="button" data-copy-family-code aria-label="复制家庭邀请码">邀请码：<b id="family-invite-code">—</b><span>复制</span></button></div>
+                    <form id="family-nickname-form"><label>家庭名称<input type="text" name="familyName" maxlength="24" required></label><label>我的家庭昵称<input type="text" name="nickname" maxlength="16" required></label><button class="secondary-button" type="submit">保存家庭信息</button></form>
+                  </article>
+                </section>
+
+                <details class="settings-section settings-data-tools settings-advanced" aria-labelledby="settings-data-title">
+                  <summary><span><small>不常用功能</small><strong id="settings-data-title">高级设置</strong></span><b>展开</b></summary>
+                  <div class="settings-advanced-body"><p>日常数据会自动保存在软件里。这里只用于换手机、手动备份或恢复数据。</p><div class="settings-data-actions"><button class="secondary-button" type="button" data-export-data>导出数据</button><button class="secondary-button" type="button" data-import-data>导入数据</button><button class="secondary-button" type="button" data-backup-data>数据备份</button><input id="data-import-file" type="file" accept="application/json,.json" hidden></div></div>
+                </details>
+
+                <section class="settings-section" aria-labelledby="settings-system-title">
+                  <div class="settings-section-heading"><div><p class="eyebrow">系统设置</p><h3 id="settings-system-title">版本与运行环境</h3></div><button class="secondary-button" type="button" data-check-update>检查更新</button></div>
+                  <dl class="settings-meta-list"><div><dt>当前版本</dt><dd id="app-version">—</dd></div><div><dt>更新时间</dt><dd id="app-updated-at">—</dd></div><div><dt>系统类型</dt><dd id="app-runtime">—</dd></div></dl>
+                </section>
+
+                <section class="settings-section settings-about-section" aria-labelledby="settings-about-title">
+                  <div class="settings-section-heading"><div><p class="eyebrow">关于</p><h3 id="settings-about-title">轻衡 · 减脂生活管理</h3></div></div>
+                  <details><summary>软件介绍</summary><p>用轻松、可持续的方式记录饮食、运动、体重与饮水。</p></details>
+                  <details><summary>使用说明</summary><p>在首页查看今日节奏，在饮食和运动页记录数据；需要家庭共享时，可在本页创建或加入家庭。</p></details>
+                  <details><summary>隐私说明</summary><p>当前版本默认将健康数据保存在本机浏览器，不会自动上传个人记录。</p></details>
+                </section>
+              </div>
+            </section>
           </dialog>
           <article class="panel profile-trend-card" aria-labelledby="profile-trend-title">
             <div class="panel-heading"><div><p class="eyebrow">过去 30 天</p><h3 id="profile-trend-title">身体变化趋势</h3><p>仅展示你真实记录过的数据，不用默认数值补齐。</p></div><span class="cute-chip">慢慢变好</span></div>
@@ -385,6 +418,29 @@
       <input type="hidden" name="editId" value="">
       <div id="dynamic-fields"></div>
       <label>备注（可选）<input type="text" name="note" maxlength="60" placeholder="例如：午餐，七分饱"></label>
+      <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存记录</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="capture-source-dialog" class="capture-source-dialog">
+    <div class="capture-source-sheet">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭照片选择">×</button>
+      <p class="eyebrow">快速记录</p><h2>添加一张照片吗？</h2><p>可以拍照、从相册选择，也可以不添加照片。</p>
+      <div class="capture-source-actions"><button type="button" data-capture-source="camera"><span>📷</span><strong>拍照</strong></button><button type="button" data-capture-source="album"><span>🖼️</span><strong>从相册选择</strong></button><button type="button" data-capture-source="blank"><span>＋</span><strong>不添加照片</strong></button></div>
+      <input id="capture-camera-input" type="file" accept="image/*" capture="environment" hidden>
+      <input id="capture-album-input" type="file" accept="image/*" hidden>
+    </div>
+  </dialog>
+
+  <dialog id="capture-detail-dialog" class="capture-detail-dialog">
+    <form id="capture-detail-form">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="关闭快速记录">×</button>
+      <p class="eyebrow">描述这次记录</p><h2>今天记录了什么？</h2>
+      <div class="capture-preview" id="capture-preview" hidden><img id="capture-preview-image" alt="记录照片"><button type="button" data-remove-capture-image>移除照片</button></div>
+      <div class="capture-kind-switch" role="group" aria-label="饮食或运动"><button class="is-active" type="button" data-capture-kind="meal">饮食</button><button type="button" data-capture-kind="activity">运动</button></div>
+      <input type="hidden" name="type" value="meal">
+      <div id="capture-detail-fields"></div>
+      <label>描述<input type="text" name="description" maxlength="60" placeholder="例如：鸡胸肉蔬菜饭 / 晚饭后快走" required></label>
       <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog>取消</button><button class="primary-button" type="submit">保存记录</button></div>
     </form>
   </dialog>
