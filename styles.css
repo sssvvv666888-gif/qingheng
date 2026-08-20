@@ -835,6 +835,10 @@ dialog { background: #fff9f6; border: 3px solid white; }
 .family-mode-banner h2 { margin: 3px 0 9px; color: var(--deep-brown); font-size: clamp(24px, 3vw, 34px); }
 .family-banner-copy { min-width: 0; flex: 1; }
 .family-banner-copy > p:not(.eyebrow) { max-width: 650px; margin: 0; color: #91777d; font-size: 11px; line-height: 1.7; }
+.family-banner-actions { display: flex; align-items: center; gap: 14px; }
+.family-sync-button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border: 1px solid rgba(222,125,136,.28); border-radius: 999px; color: #9c626b; background: rgba(255,255,255,.82); cursor: pointer; font-size: 10px; font-weight: 900; box-shadow: 0 7px 18px rgba(133,83,77,.08); }
+.family-sync-button:hover { transform: translateY(-1px); border-color: #df8d96; }
+.family-sync-button span { font-size: 14px; line-height: 1; }
 .family-banner-bears { position: relative; flex: 0 0 150px; height: 112px; }
 .family-banner-bears img { position: absolute; bottom: -8px; left: 10px; width: 82px; height: 112px; object-fit: contain; }
 .family-banner-bears img:last-child { right: 0; left: auto; width: 68px; height: 86px; }
@@ -842,7 +846,7 @@ dialog { background: #fff9f6; border: 3px solid white; }
 .family-setup-card { display: grid; align-content: start; gap: 13px; background: rgba(255,255,255,.82); }
 .family-setup-card:nth-child(2) { background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(237,246,233,.85)); }
 .family-setup-card h3, .family-setup-card h4 { margin: 0; color: var(--deep-brown); }
-.family-setup-card label, .family-header-card label, .family-share-card label { display: grid; gap: 7px; color: #806b70; font-size: 10px; font-weight: 800; }
+.family-setup-card label, .family-header-card label { display: grid; gap: 7px; color: #806b70; font-size: 10px; font-weight: 800; }
 .family-workspace { display: grid; gap: 16px; }
 .family-header-member-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
 .family-header-member-chip { min-width: 82px; display: flex; align-items: center; gap: 8px; padding: 7px 10px 7px 7px; border: 1px solid rgba(229,194,188,.46); border-radius: 999px; color: #6d565b; background: rgba(255,255,255,.78); }
@@ -856,14 +860,8 @@ dialog { background: #fff9f6; border: 3px solid white; }
 .family-member-avatar .blank-avatar-icon { width: 72%; height: 72%; }
 .family-member-card strong, .family-feed-copy strong { color: #684f55; font-size: 12px; }
 .family-member-card p, .family-feed-copy p { margin: 5px 0 0; color: #9a8489; font-size: 10px; line-height: 1.5; }
-.family-share-card { background: linear-gradient(145deg, #fff9f3, #edf6eb); }
-.family-share-card > .primary-button { width: 100%; margin-top: 16px; }
-.family-share-card form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-.family-share-card form button { grid-column: 1 / -1; }
-.family-share-card > p { margin: 14px 0 0; color: #9b878a; font-size: 9px; line-height: 1.6; }
 .family-feed-card { margin-top: 0; }
 .family-feed-card-priority { margin: 16px 0; background: linear-gradient(145deg, #fffaf5, #fff0ed); }
-.family-share-card { margin: 0; background: linear-gradient(145deg, #fff9f2, #edf6eb); }
 .family-content-grid > :only-child { grid-column: 1 / -1; }
 .nutrition-goal-summary-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; background: linear-gradient(135deg, #fff6ef, #eef7ec); }
 .nutrition-goal-summary-card h3 { margin: 3px 0 7px; color: var(--deep-brown); font-size: 22px; }
@@ -1198,13 +1196,14 @@ select:focus { border-color: #eca8b0; box-shadow: 0 0 0 3px rgba(236,168,176,.15
   .capture-source-sheet, #capture-detail-form { padding: 24px 20px; }
   #capture-detail-fields { grid-template-columns: 1fr; }
   .family-mode-banner { align-items: flex-start; padding-right: 18px; }
+  .family-banner-actions { flex: 0 0 96px; align-items: flex-end; flex-direction: column; gap: 6px; }
+  .family-sync-button { padding: 8px 10px; }
   .family-banner-bears { flex-basis: 88px; opacity: .62; }
   .family-banner-bears img { left: 0; width: 62px; height: 90px; }
   .family-banner-bears img:last-child { width: 49px; height: 65px; }
   .family-setup-grid, .family-content-grid { grid-template-columns: 1fr; }
   .family-header-member-list { max-width: calc(100% - 18px); }
   .profile-family-info-card form { grid-template-columns: 1fr; }
-  .family-share-card form { grid-template-columns: 1fr; }
   .ai-food-intro { align-items: stretch; flex-direction: column; }
   .ai-photo-button { justify-content: center; text-align: center; }
   .ai-food-result { grid-template-columns: 1fr; }

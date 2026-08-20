@@ -1600,6 +1600,7 @@ function renderFamily() {
   const setup = document.querySelector("#family-setup");
   const workspace = document.querySelector("#family-workspace");
   const demo = document.querySelector("#family-demo");
+  const syncButton = document.querySelector("#family-sync-button");
   if (!family) {
     state.familySystem.mode = "personal";
     setText("family-name", "创建或加入家庭");
@@ -1608,6 +1609,7 @@ function renderFamily() {
     setup.hidden = false;
     workspace.hidden = true;
     demo.hidden = true;
+    syncButton.hidden = true;
     renderHealthModeSwitch();
     renderHomeMode();
     return;
@@ -1617,6 +1619,7 @@ function renderFamily() {
   setup.hidden = true;
   workspace.hidden = false;
   demo.hidden = true;
+  syncButton.hidden = false;
   setText("family-name", family.familyName);
   setText("family-member-count", `${family.members.length} 人`);
   renderFamilyHeaderMembers(family);
