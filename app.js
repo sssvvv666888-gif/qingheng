@@ -37,7 +37,7 @@ let activeFilter = "all";
 
 const logConfig = {
   meal: { title: "记录一餐", label: "估算能量（kcal）", min: 0, max: 5000, step: 10, placeholder: "例如 520", unit: "kcal", symbol: "食", name: "饮食" },
-  activity: { title: "记录活动", label: "活动时长（分钟）", min: 1, max: 600, step: 1, placeholder: "例如 30", unit: "分钟", symbol: "动", name: "运动" },
+  activity: { title: "记录运动", label: "活动时长（分钟）", min: 1, max: 600, step: 1, placeholder: "例如 30", unit: "分钟", symbol: "动", name: "运动" },
   water: { title: "记录饮水", label: "饮水量（ml）", min: 1, max: 5000, step: 50, placeholder: "例如 250", unit: "ml", symbol: "水", name: "饮水" },
   weight: { title: "记录体重", label: "体重（kg）", min: 30, max: 300, step: 0.1, placeholder: "例如 67.2", unit: "kg", symbol: "重", name: "体重" },
   steps: { unit: "步", symbol: "步", name: "步数" },
@@ -46,11 +46,15 @@ const logConfig = {
 
 let pendingAiFood = null;
 let pendingCaptureImage = "";
+let captureDefaultKind = "meal";
 let nutritionGoalEditing = false;
 let recipeAutoplayTimer = 0;
 let recipeAutoplayResumeTimer = 0;
 let recipeAutoplayPaused = false;
 let recipeDisplayMode = "random";
+let exerciseAutoplayTimer = 0;
+let exerciseAutoplayResumeTimer = 0;
+let exerciseAutoplayPaused = false;
 
 function daysAgo(days, hour = 8) {
   const date = new Date();
@@ -133,6 +137,11 @@ function setView(name) {
   document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("is-active", button.dataset.view === name));
   const view = document.querySelector(`#view-${name}`);
   document.querySelector("#view-title").textContent = name === "today" && hasCompletedProfile() ? greetingTitle() : (view?.dataset.title || "轻衡");
+  const cameraButton = document.querySelector(".camera-trigger");
+  const settingsButton = document.querySelector(".settings-trigger");
+  if (cameraButton) cameraButton.hidden = !["nutrition", "exercise"].includes(name);
+  if (settingsButton) settingsButton.hidden = name !== "profile";
+  captureDefaultKind = name === "exercise" ? "activity" : "meal";
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (name === "records") renderTimeline();
   if (name === "family") renderFamily();
@@ -373,6 +382,7 @@ function renderDashboard() {
   renderNutrition();
   renderHealthScore();
   renderExercise();
+  renderNutritionHistory();
   renderHomeMode();
 }
 
@@ -453,6 +463,21 @@ function renderTodayMeals() {
         <div class="meal-card-actions"><button type="button" data-edit-meal="${log.id}">编辑</button><button type="button" data-delete-meal="${log.id}">删除</button></div>
       </div>
     </article>`).join("");
+}
+
+function renderNutritionHistory() {
+  const container = document.querySelector("#nutrition-history-list");
+  if (!container) return;
+  const history = state.logs
+    .filter(log => log.type === "meal")
+    .sort((a, b) => new Date(b.at) - new Date(a.at))
+    .slice(0, 30);
+  if (!history.length) {
+    container.innerHTML = '<p class="empty-state">还没有饮食记录。</p>';
+    return;
+  }
+  container.innerHTML = history.map(log => `
+    <article><div><span>${escapeHtml(log.mealType || "饮食")} · ${escapeHtml(formatMealDate(log))}</span><strong>${escapeHtml(log.foodName || log.note || "饮食记录")}</strong></div><b>${Math.round(Number(log.value) || 0)} kcal</b><div class="nutrition-history-actions"><button type="button" data-edit-meal="${log.id}">编辑</button><button type="button" data-delete-meal="${log.id}">删除</button></div></article>`).join("");
 }
 
 function formatMealDate(log) {
@@ -619,6 +644,41 @@ function initializeRecipeCarousel() {
   grid.addEventListener("focusout", resume);
   window.clearInterval(recipeAutoplayTimer);
   recipeAutoplayTimer = window.setInterval(advanceRecipeCarousel, 3200);
+}
+
+function advanceExerciseCarousel() {
+  const grid = document.querySelector("#exercise-recommendation-grid");
+  if (!grid || exerciseAutoplayPaused || document.hidden || !grid.closest(".view")?.classList.contains("is-active")) return;
+  const maxScroll = grid.scrollWidth - grid.clientWidth;
+  const firstCard = grid.querySelector(".exercise-recommendation-card");
+  if (!firstCard || maxScroll < 4) return;
+  const gap = Number.parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const step = firstCard.getBoundingClientRect().width + gap;
+  const next = grid.scrollLeft >= maxScroll - 4 ? 0 : Math.min(grid.scrollLeft + step, maxScroll);
+  grid.scrollTo({ left: next, behavior: "smooth" });
+}
+
+function initializeExerciseCarousel() {
+  const grid = document.querySelector("#exercise-recommendation-grid");
+  if (!grid || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+  const pause = () => {
+    window.clearTimeout(exerciseAutoplayResumeTimer);
+    exerciseAutoplayPaused = true;
+  };
+  const resume = () => {
+    window.clearTimeout(exerciseAutoplayResumeTimer);
+    exerciseAutoplayResumeTimer = window.setTimeout(() => { exerciseAutoplayPaused = false; }, 1800);
+  };
+  grid.dataset.autoplay = "true";
+  grid.addEventListener("pointerenter", pause);
+  grid.addEventListener("pointerleave", resume);
+  grid.addEventListener("pointerdown", pause);
+  grid.addEventListener("pointerup", resume);
+  grid.addEventListener("pointercancel", resume);
+  grid.addEventListener("focusin", pause);
+  grid.addEventListener("focusout", resume);
+  window.clearInterval(exerciseAutoplayTimer);
+  exerciseAutoplayTimer = window.setInterval(advanceExerciseCarousel, 3400);
 }
 
 function openRecipeDetail(id) {
@@ -864,7 +924,7 @@ function renderExercise() {
   const steps = todaySteps();
   const intake = sumToday("meal");
   const targetMinutes = Math.max(10, Number(state.settings.activityTarget) || 30);
-  const recommendation = window.ExerciseRecommendationSystem.recommend({
+  const recommendationInput = {
     intakeCalories: intake,
     energyTarget: state.settings.energyTarget,
     currentWeight: state.profile?.currentWeight,
@@ -874,7 +934,9 @@ function renderExercise() {
     steps,
     targetMinutes,
     healthGoal: state.settings.healthGoal
-  });
+  };
+  const recommendations = window.ExerciseRecommendationSystem.recommendMany(recommendationInput, 5);
+  const recommendation = recommendations[0];
   const goalLabel = window.NutritionManager.GOAL_LABELS[window.NutritionManager.normalizeGoal(state.settings.healthGoal)];
 
   setText("exercise-goal-minutes", targetMinutes);
@@ -887,11 +949,14 @@ function renderExercise() {
   setText("exercise-ai-intake", Math.round(intake));
   setText("exercise-ai-activity", recommendation.activityLevel);
   setText("exercise-ai-goal", goalLabel);
-  setText("exercise-ai-icon", recommendation.icon);
-  setText("exercise-ai-name", recommendation.name);
-  setText("exercise-ai-minutes", recommendation.minutes);
-  setText("exercise-ai-calories", recommendation.calories);
-  setText("exercise-ai-reason", recommendation.reason);
+  const recommendationGrid = document.querySelector("#exercise-recommendation-grid");
+  if (recommendationGrid) {
+    recommendationGrid.innerHTML = recommendations.map(item => `
+      <button class="exercise-recommendation-card" type="button" data-exercise-type="${item.typeId}" data-exercise-minutes="${item.minutes}" data-exercise-name="${escapeHtml(item.name)}">
+        <span class="exercise-recommendation-icon" aria-hidden="true">${item.icon}</span>
+        <span class="exercise-recommendation-copy"><small>今日推荐</small><strong>${escapeHtml(item.name)}</strong><b>${item.minutes} 分钟 · ${item.calories} kcal</b><em>${escapeHtml(item.reason)}</em></span>
+      </button>`).join("");
+  }
   setText("exercise-balance-intake", Math.round(intake));
   const balanceAdvice = calories <= 0
     ? `今天已摄入 ${Math.round(intake)} kcal，先完成推荐运动，系统会继续更新热量平衡。`
@@ -901,25 +966,33 @@ function renderExercise() {
         ? "今天的运动目标已完成，饮食与活动节奏保持得很好。"
         : "今天热量平衡较平稳，继续完成剩余运动目标即可。";
   setText("exercise-balance-advice", balanceAdvice);
-  const aiButton = document.querySelector("#exercise-ai-start");
-  if (aiButton) {
-    aiButton.dataset.exerciseType = recommendation.typeId;
-    aiButton.dataset.exerciseMinutes = String(recommendation.minutes);
-    aiButton.dataset.exerciseName = recommendation.name;
-  }
-  const typeList = document.querySelector("#exercise-type-list");
-  if (typeList) typeList.innerHTML = window.ExerciseRecommendationSystem.TYPES.map(type => `<button type="button" data-exercise-type="${type.id}"><span>${type.icon}</span><strong>${escapeHtml(type.name)}</strong></button>`).join("");
-  const history = document.querySelector("#exercise-history");
-  if (!history) return;
-  const logs = state.logs
-    .filter(log => (log.type === "activity" || log.type === "video") && isToday(log.at))
-    .sort((left, right) => new Date(right.at) - new Date(left.at));
-  if (!logs.length) {
-    history.innerHTML = '<p class="empty-state">今天还没有运动记录，散步十分钟也很好。</p>';
-    return;
-  }
-  history.innerHTML = logs.map(log => `
-    <article><span>动</span><div><strong>${escapeHtml(log.type === "video" ? "历史运动" : (log.note || "运动"))}</strong><small>${formatTime(new Date(log.at))}</small></div><b>${formatValue(Number(log.duration ?? log.value) || 0)} 分钟 · ${Math.round(Number(log.calories) || 0)} kcal</b></article>`).join("");
+  renderExerciseStats();
+}
+
+function renderExerciseStats() {
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    return { key: dateInputValue(date.toISOString()), label: `${date.getMonth() + 1}/${date.getDate()}`, minutes: 0, calories: 0 };
+  });
+  const byDate = new Map(dates.map(day => [day.key, day]));
+  const records = state.logs
+    .filter(log => log.type === "activity" || log.type === "video")
+    .sort((a, b) => new Date(b.at) - new Date(a.at));
+  records.forEach(log => {
+    const day = byDate.get(dateInputValue(log.at));
+    if (!day) return;
+    day.minutes += Number(log.duration ?? log.value) || 0;
+    day.calories += Number(log.calories ?? (log.type === "video" ? log.value : 0)) || 0;
+  });
+  setText("exercise-week-minutes", formatValue(dates.reduce((sum, day) => sum + day.minutes, 0)));
+  setText("exercise-week-calories", Math.round(dates.reduce((sum, day) => sum + day.calories, 0)));
+  const maxMinutes = Math.max(1, ...dates.map(day => day.minutes));
+  const trend = document.querySelector("#exercise-weekly-trend");
+  if (trend) trend.innerHTML = dates.map(day => `<div><i><em style="height:${Math.max(day.minutes ? 12 : 0, day.minutes / maxMinutes * 100)}%"></em></i><b>${formatValue(day.minutes)}</b><span>${day.label}</span></div>`).join("");
+  const history = document.querySelector("#exercise-recent-history");
+  if (history) history.innerHTML = records.length ? records.slice(0, 12).map(log => `<article><div><strong>${escapeHtml(log.note || "运动")}</strong><span>${escapeHtml(new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(log.at)))}</span></div><b>${formatValue(Number(log.duration ?? log.value) || 0)} 分钟 · ${Math.round(Number(log.calories) || 0)} kcal</b></article>`).join("") : '<p class="empty-state">还没有运动记录。</p>';
 }
 
 function openExerciseType(typeId, minutesOverride, nameOverride) {
@@ -927,6 +1000,11 @@ function openExerciseType(typeId, minutesOverride, nameOverride) {
   const minutes = Math.max(1, Number(minutesOverride) || type.defaultMinutes);
   openLogDialog("activity");
   const form = document.querySelector("#log-form");
+  const typeSelect = form.elements.exerciseType;
+  if (typeSelect) {
+    typeSelect.value = type.id;
+    applyExerciseTypeSelection(typeSelect);
+  }
   form.elements.value.value = String(minutes);
   form.elements.note.value = nameOverride || type.name;
   const caloriesInput = form.elements.calories;
@@ -956,10 +1034,39 @@ function openLogDialog(type, editId = "") {
       <label>脂肪（g）<input type="number" name="fat" min="0" max="1000" step="0.1" value="${escapeHtml(editingLog?.fat || "")}" placeholder="例如 12" required></label>
       <label>餐食图片（可选）<input type="file" name="image" accept="image/*"><small class="field-hint">${editingLog?.image ? "已保留原图片；选择新图后会覆盖。" : "图片会压缩后保存在当前浏览器，不会上传。"}</small></label>`;
   }
-  if (type === "activity") fields += '<label>消耗热量（kcal，可选）<input type="number" name="calories" min="0" max="5000" step="1" placeholder="例如 120"></label>';
+  if (type === "activity") {
+    const savedType = String(editingLog?.exerciseTypeId || "");
+    const options = window.ExerciseRecommendationSystem.TYPES.map(item => `<option value="${item.id}" ${savedType === item.id ? "selected" : ""}>${item.icon} ${escapeHtml(item.name)}</option>`).join("");
+    const customSelected = editingLog && !window.ExerciseRecommendationSystem.TYPES.some(item => item.id === savedType);
+    fields = `<label>运动类型<select name="exerciseType" required><option value="" ${editingLog ? "" : "selected"} disabled>请选择运动类型</option>${options}<option value="custom" ${customSelected ? "selected" : ""}>＋ 自定义运动</option></select></label>${fields}<label>消耗热量（kcal，可选）<input type="number" name="calories" min="0" max="5000" step="1" value="${escapeHtml(editingLog?.calories || "")}" placeholder="例如 120"></label>`;
+  }
   document.querySelector("#dynamic-fields").innerHTML = fields;
-  form.elements.note.value = editingLog?.note || "";
+  const noteInput = form.elements.note;
+  const isActivity = type === "activity";
+  document.querySelector("#log-note-label").textContent = isActivity ? "运动名称" : "备注（可选）";
+  noteInput.placeholder = isActivity ? "例如：羽毛球" : "例如：午餐，七分饱";
+  noteInput.required = isActivity;
+  noteInput.value = editingLog?.note || "";
   document.querySelector("#log-dialog").showModal();
+}
+
+function applyExerciseTypeSelection(select) {
+  const form = select?.closest("form");
+  if (!form || select.name !== "exerciseType") return;
+  const noteInput = form.elements.note;
+  if (select.value === "custom") {
+    form.elements.value.value = "";
+    if (form.elements.calories) form.elements.calories.value = "";
+    noteInput.value = "";
+    noteInput.focus();
+    return;
+  }
+  const type = window.ExerciseRecommendationSystem.TYPES.find(item => item.id === select.value);
+  if (!type) return;
+  form.elements.value.value = String(type.defaultMinutes);
+  noteInput.value = type.name;
+  const caloriesInput = form.elements.calories;
+  if (caloriesInput) caloriesInput.value = String(window.ExerciseRecommendationSystem.estimateCalories(type, type.defaultMinutes, state.profile?.currentWeight));
 }
 
 function dateInputValue(iso) {
@@ -1024,7 +1131,7 @@ function openCaptureDetails() {
   document.querySelector("#capture-source-dialog")?.close();
   const form = document.querySelector("#capture-detail-form");
   form.reset();
-  renderCaptureKind("meal");
+  renderCaptureKind(captureDefaultKind);
   renderCapturePreview();
   const dialog = document.querySelector("#capture-detail-dialog");
   if (dialog && !dialog.open) dialog.showModal();
@@ -1143,7 +1250,10 @@ async function submitLog(event) {
     log.image = image || existing?.image || "";
     log.recipeEmoji = existing?.recipeEmoji || "";
   }
-  if (type === "activity") log.calories = Math.max(0, Number(form.get("calories")) || 0);
+  if (type === "activity") {
+    log.calories = Math.max(0, Number(form.get("calories")) || 0);
+    log.exerciseTypeId = String(form.get("exerciseType") || "custom");
+  }
   if (existing) Object.assign(existing, log, { id: existing.id });
   else state.logs.push(log);
   if (type === "activity" && state.familySystem.family && state.familySystem.currentMemberId) {
@@ -1320,7 +1430,10 @@ async function submitSettings(event) {
   const currentMember = state.familySystem?.family?.members?.find(member => member.memberId === state.familySystem.currentMemberId);
   if (currentMember) currentMember.avatar = state.profile.avatar;
   if (Number.isFinite(previousWeight) && previousWeight !== currentWeight) {
-    state.logs.push({ id: Date.now(), type: "weight", value: currentWeight, note: "资料更新", at: new Date().toISOString() });
+    const now = Date.now();
+    const lastWeight = state.logs.filter(log => log.type === "weight").sort((a, b) => new Date(b.at) - new Date(a.at))[0];
+    if (!lastWeight || Math.abs(Number(lastWeight.value) - previousWeight) > .001) state.logs.push({ id: now - 1, type: "weight", value: previousWeight, note: "修改前体重", at: new Date(now - 1000).toISOString() });
+    state.logs.push({ id: now, type: "weight", value: currentWeight, note: "资料更新", at: new Date(now).toISOString() });
   }
   saveState("资料已保存");
   renderDashboard();
@@ -1781,6 +1894,10 @@ document.addEventListener("click", event => {
 });
 
 document.addEventListener("change", event => {
+  if (event.target.matches('#log-form select[name="exerciseType"]')) {
+    applyExerciseTypeSelection(event.target);
+    return;
+  }
   if (event.target.matches("#capture-camera-input, #capture-album-input")) {
     handleCaptureFile(event.target.files?.[0]);
     return;
@@ -1838,6 +1955,7 @@ initializeExercisePage();
 fillSettings();
 renderDashboard();
 initializeRecipeCarousel();
+initializeExerciseCarousel();
 renderTimeline();
 renderInsights();
 fillNutritionGoal();

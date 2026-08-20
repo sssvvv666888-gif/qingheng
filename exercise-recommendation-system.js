@@ -63,5 +63,59 @@
     };
   }
 
-  global.ExerciseRecommendationSystem = Object.freeze({ TYPES, getType, estimateCalories, activityLevel, recommend });
+  function recommendMany(input = {}, count = 5) {
+    const primary = recommend(input);
+    const intake = Math.max(0, Number(input.intakeCalories) || 0);
+    const energyTarget = Math.max(1, Number(input.energyTarget) || 1800);
+    const intakeRatio = intake / energyTarget;
+    const completedMinutes = Math.max(0, Number(input.activityMinutes) || 0);
+    const targetMinutes = Math.max(10, Number(input.targetMinutes) || 30);
+    const remainingMinutes = Math.max(10, targetMinutes - completedMinutes);
+    let priorityIds;
+
+    if (completedMinutes >= targetMinutes) priorityIds = ["stretch", "yoga", "walk", "swim", "cycle"];
+    else if (input.healthGoal === "muscle_gain") priorityIds = ["strength", "walk", "cycle", "swim", "stretch"];
+    else if (intakeRatio >= 1) priorityIds = ["walk", "cycle", "run", "swim", "strength"];
+    else if (intakeRatio >= .65) priorityIds = ["walk", "strength", "cycle", "yoga", "run"];
+    else priorityIds = ["walk", "yoga", "stretch", "strength", "cycle"];
+
+    const orderedIds = [primary.typeId, ...priorityIds, ...TYPES.map(type => type.id)]
+      .filter((id, index, all) => all.indexOf(id) === index)
+      .slice(0, Math.max(1, Number(count) || 5));
+    const intakeContext = intakeRatio >= 1
+      ? `今日已摄入 ${Math.round(intake)} kcal，适合增加一段可完成的活动。`
+      : intakeRatio >= .65
+        ? `今日已摄入 ${Math.round(intake)} kcal，适合保持稳定的活动节奏。`
+        : `今日已摄入 ${Math.round(intake)} kcal，先从轻松活动开始即可。`;
+    const typeReasons = {
+      walk: "快走强度温和，日常更容易坚持。",
+      run: "慢跑能在较短时间内提高活动量。",
+      cycle: "骑行对关节较友好，也能持续消耗能量。",
+      strength: "力量训练有助于维持肌肉和基础活动能力。",
+      yoga: "瑜伽适合放松身体并补充柔韧活动。",
+      stretch: "拉伸适合恢复和缓解久坐紧张。",
+      swim: "游泳能让全身参与，同时减轻关节压力。"
+    };
+
+    return orderedIds.map((id, index) => {
+      const type = getType(id);
+      const intakeAdjustment = intakeRatio >= 1 ? 10 : intakeRatio < .45 ? -5 : 0;
+      const preferredMinutes = index === 0 ? primary.minutes : Math.min(type.defaultMinutes, remainingMinutes);
+      const minutes = completedMinutes >= targetMinutes
+        ? Math.max(10, Math.min(25, type.defaultMinutes))
+        : Math.max(10, Math.min(45, preferredMinutes + intakeAdjustment));
+      return {
+        typeId: type.id,
+        name: type.recommendationName,
+        icon: type.icon,
+        minutes,
+        calories: estimateCalories(type, minutes, input.currentWeight),
+        reason: `${intakeContext}${typeReasons[type.id]}`,
+        activityLevel: primary.activityLevel,
+        targetMinutes
+      };
+    });
+  }
+
+  global.ExerciseRecommendationSystem = Object.freeze({ TYPES, getType, estimateCalories, activityLevel, recommend, recommendMany });
 })(window);
